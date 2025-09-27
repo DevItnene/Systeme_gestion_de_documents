@@ -1,4 +1,4 @@
 <?php
-namespace App\views;
+namespace App\Views;
 
 ?>

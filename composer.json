@@ -3,7 +3,8 @@
     "description": "Systeme de gestion des documents",
     "autoload": {
         "psr-4": {
-            "Itnene\\DocumentsManager\\": "src/"
+            "Itnene\\DocumentsManager": "./",
+            "App\\": "./"
         }
     },
     "authors": [
@@ -12,10 +13,5 @@
             "email": "mahamathassaneitnene@gmail.com"
         }
     ],
-    "autoload": {
-        "psr-4": {
-            "App\\" : "/"
-        }
-    },
     "require": {}
 }

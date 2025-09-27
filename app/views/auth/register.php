@@ -1,4 +1,4 @@
 <?php
-namespace App\auth;
+namespace App\Auth;
 
 ?>
