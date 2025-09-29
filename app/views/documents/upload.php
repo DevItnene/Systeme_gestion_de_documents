@@ -1,4 +1,4 @@
 <?php
-namespace App\Documents;
+namespace App\Views\Documents;
 
 ?>

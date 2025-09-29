@@ -1,4 +1,4 @@
 <?php
-namespace App\Layouts;
+namespace App\Views\Layouts;
 
 ?>

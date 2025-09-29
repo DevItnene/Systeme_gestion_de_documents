@@ -6,6 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Itnene\\DocumentsManager' => array($baseDir . '/'),
-    'App\\' => array($baseDir . '/'),
+    'App\\' => array($baseDir . '/App'),
 );

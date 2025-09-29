@@ -1,17 +1,18 @@
 {
-    "name": "itnene/documents_manager",
+    "name": "devitnene/documents_manager",
     "description": "Systeme de gestion des documents",
-    "autoload": {
-        "psr-4": {
-            "Itnene\\DocumentsManager": "./",
-            "App\\": "./"
-        }
-    },
     "authors": [
         {
             "name": "DevItnene",
             "email": "mahamathassaneitnene@gmail.com"
         }
     ],
-    "require": {}
+    "autoload": {
+        "psr-4": {
+            "App\\" : "App/"
+        }
+    },
+    "require": {
+        "altorouter/altorouter": "^2.0"
+    }
 }

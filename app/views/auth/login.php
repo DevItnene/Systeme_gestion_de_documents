@@ -1,4 +1,5 @@
 <?php
-namespace App\Auth;
+namespace App\Views\Auth;
 
 ?>
+page de authentification
