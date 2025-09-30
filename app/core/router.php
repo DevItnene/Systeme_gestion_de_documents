@@ -1,25 +1,46 @@
 <?php
 namespace App\Core;
 
-use AltoRouter;
 class Router {
-    private $ViewPath;
-    private $router;
-    public function __construct($ViewPath) {
-        $this->ViewPath = $ViewPath;
-        $this->router = new AltoRouter();
+    private $routes = [];
+    public function get($path, $controllerAction) {
+        $this->routes['GET'][$path] = $controllerAction;
     }
 
-    public function get($url, $view, ?string $name = null) {
-        $this->router->map('GET', $url, $view, $name);
-        return $this;
+    public function post($path, $controllerAction) {
+        $this->routes['POST'][$path] = $controllerAction;
     }
 
     public function run() {
-        $match = $this->router->match();
-        $view = $match['target'];
-        require $this->ViewPath . \DIRECTORY_SEPARATOR . $view . '.php'; 
-        return $this;
+        $method = $_SERVER['REQUEST_METHOD'];
+        $path = parse_url($_SERVER['REQUEST_URI'], \PHP_URL_PATH); // /Login
+        $path = str_replace('/index.php','',$path);
+        $path = $path ?: '/';
+
+        if (isset($this->routes[$method][$path])) {
+            $controllerAction = $this->routes[$method][$path];
+            list($controllerName, $action) = explode('@', $controllerAction);
+            $controllerClass = "App\\Controllers\\{$controllerName}";
+
+            if (class_exists($controllerClass)) {
+                $controller = new $controllerClass();
+                $controller->$action();
+            } else {
+                $this->notFound();
+            }
+        } else {
+            $this->notFound();
+        }
+    }
+
+    private function notFound() {
+        http_response_code(404);
+        echo "<div class='container'>";
+        echo "<h1>404 - Page non trouvée</h1>";
+        echo "<p><a href='/'>Retour à l'accueil</a></p>";
+        echo "</div>";
+
+        exit;
     }
 }
 ?>

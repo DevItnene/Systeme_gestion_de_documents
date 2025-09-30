@@ -2,23 +2,20 @@
 namespace App\Public;
 
 use App\Core\Router;
-
+session_start();
 require_once __DIR__ . "/../../vendor/autoload.php";
 
-// $router = new \AltoRouter();
+$router = new Router();
 
-$router = new Router(dirname(__DIR__) ."/Views");
+$router->get("/", "AuthController@showLogin");
+$router->get("/login", "AuthController@showLogin");
+$router->post("/login", "AuthController@LoginTraitment");
+$router->get("/dashboard", "DashboardController@index");
+$router->get("/register", "AuthController@showRegister");
+$router->get("/logout", "AuthController@LogOut");
 
-$router
-    ->get('/', 'Auth/Login', 'LoginPage')
-    ->run();
+$router->run();
 
-// use App\Core\Database;
-// $dataInfo = new Database();
-// $sql = "SELECT * FROM users";
-
-// $result = $dataInfo->query($sql);
-// var_dump($result);
 
 
 
