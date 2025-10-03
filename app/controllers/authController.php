@@ -59,16 +59,23 @@ class AuthController {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
-
-        if ($this->auth->userModel->createUser($name, $email, $password)) {
-            $_SESSION['success'] = "Compte créé avec succès ! Vous pouvez vous connecter.";
-            header("Location: /login");
-            exit;
+        
+        if ($password == $password_confirm) {
+            if ($this->auth->userModel->createUser($name, $email, $password)) {
+                $_SESSION['success'] = "Compte créé avec succès ! Vous pouvez vous connecter.";
+                header("Location: /login");
+                exit;
+            } else {
+                $_SESSION["error"] = "Cette adresse email est déjà utilisée.";
+                header("Location: /register");
+                exit;
+            }
         } else {
-            $_SESSION["error"] = "Cette adresse email est déjà utilisée.";
+            $_SESSION["error"] = "Les mots de passe ne correspondent pas.";
             header("Location: /register");
             exit;
         }
+        
     }
 
     // Deconnexion

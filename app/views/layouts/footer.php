@@ -1,4 +1,4 @@
-    </div>
+
     <!-- main.js Link -->
     <script src="/assets/js/script.js"></script>
     <!-- Bootstrap JS -->

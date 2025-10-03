@@ -16,90 +16,10 @@ class Dashboard
     public function Dashboard()
     {
         echo "
-            <!-- ===== SIDEBAR ===== -->
-            <div class='sidebar'>
-                <div class='sidebar-brand'>
-                    <h2><i class='fas fa-book-open'></i>DocManager</h2>
-                </div>
-
-                <div class='sidebar-menu'>
-                    <a href='/dashboard' class='sidebar-item active'>
-                        <i class='fas fa-home'></i>
-                        <span>Tableau de Bord</span>
-                    </a>
-
-                    <a href='/documents' class='sidebar-item'>
-                        <i class='fas fa-folder'></i>
-                        <span>Mes Documents</span>
-                    </a>
-
-                    <a href='/documents/upload' class='sidebar-item'>
-                        <i class='fas fa-upload'></i>
-                        <span>Uploader</span>
-                    </a>
-
-                    <div class='sidebar-divider'></div>
-
-                    " . ($this->auth->isAdmin() ? "
-                    <a href='/admin/users' class='sidebar-item'>
-                        <i class='fas fa-users-cog'></i>
-                        <span>Gestion Utilisateurs</span>
-                    </a>
-
-                    <a href='/admin/settings' class='sidebar-item'>
-                        <i class='fas fa-cogs'></i>
-                        <span>Paramètres</span>
-                    </a>
-
-                    <div class='sidebar-divider'></div>
-                    " : "") . "
-
-                    <a href='/profile' class='sidebar-item'>
-                        <i class='fas fa-user'></i>
-                        <span>Mon Profil</span>
-                    </a>
-
-                    <a href='/logout' class='sidebar-item'>
-                        <i class='fas fa-sign-out-alt'></i>
-                        <span>Déconnexion</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- ===== HEADER ===== -->
-            <div class='header'>
-                <div class='search-bar'>
-                    <input type='text' placeholder='🔍 Rechercher un document, un utilisateur...'>
-                </div>
-
-                <div class='header-actions'>
-                    <button class='btn-icon' title='Notifications'>
-                        <i class='fas fa-bell'></i>
-                    </button>
-
-                    <button class='btn-icon' title='Paramètres'>
-                        <i class='fas fa-cog'></i>
-                    </button>
-
-                    <div class='user-profile'>
-                        <div class='user-avatar'>
-                            " . strtoupper(substr($this->user['name'], 0, 1)) . "
-                        </div>
-                        <div class='user-info'>
-                            <h5>{$this->user['name']}</h5>
-                            <p>" . ($this->auth->isAdmin() ? 'Administrateur' : 'Utilisateur') . "</p>
-                        </div>
-                        <i class='fas fa-chevron-down'></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== MAIN CONTENT ===== -->
-            <div class='main-content'>
                 <!-- Section Bienvenue -->
                 <div class='welcome-section'>
                     <h1>Bonjour, {$this->user['name']} ! 👋</h1>
-                    <p class='mb-0'>Bienvenue sur votre tableau de bord DocManager</p>
+                    <p>Bienvenue sur votre tableau de bord DocManager</p>
                     <span class='" . ($this->auth->isAdmin() ? 'admin-badge' : 'user-badge') . "'>
                         " . ($this->auth->isAdmin() ? '🏆 ADMINISTRATEUR' : '👤 UTILISATEUR') . "
                     </span>

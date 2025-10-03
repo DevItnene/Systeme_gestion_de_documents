@@ -22,3 +22,29 @@ document.addEventListener('DOMContentLoaded', function() {
         card.classList.add('animate__animated', 'animate__fadeInUp');
     });
 });
+
+// Activer un lien du sidebar
+links = document.querySelectorAll('.sidebar-item')
+currentUrl = location.pathname;
+
+links.forEach(link => {
+  if (link.getAttribute('href') === currentUrl) {
+    link.classList.add('active')
+  } else {
+    link.classList.remove('active')
+  }
+})
+
+// Manipulations des actions des bouttons tables
+links_action = document.querySelectorAll('.links-action a')
+console.log(links_action);
+
+// links_action.forEach(link => {
+//   link.addEventListener('click', () => {
+    
+//   })
+// })
+
+
+
+

@@ -12,6 +12,7 @@ class Database {
         $this->connect();
     }
 
+    // fonction pour se connecter a la base de données
     public function connect() {
         try {
             $dsn = "mysql:host={$this->config['host']}; dbname={$this->config['dbname']}; charset={$this->config['charset']}";
@@ -23,6 +24,7 @@ class Database {
         }
     }
 
+    // Fonction pour une requete SELECT qui renvoie un seul element
     public function queryFetch($sql, $params = []) {
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -33,6 +35,7 @@ class Database {
         }
     }
 
+    // Fonction pour une requete SELECT qui renvoie plusieurs elements
     public function queryFetchAll($sql, $params = []) {
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -43,6 +46,7 @@ class Database {
         }
     }
 
+    // Fonction pour une requete UPDATE/DELETE
     public function query(string $sql, $params = []) {
         try {
             $stmt = $this->pdo->prepare($sql);

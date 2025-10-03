@@ -21,7 +21,7 @@ class User {
     }
 
     public function updateLastLogin($id) {
-        $stmt = $this->db->query("UPDATE users SET last_login = NOW() WHERE id = ?", [$id]);
+        $this->db->query("UPDATE users SET last_login = NOW() WHERE id = ?", [$id]);
         return true;
     }
 
