@@ -10,7 +10,7 @@ $router = new Router();
 $router->get("/", "AuthController@showLogin");
 $router->get("/login", "AuthController@showLogin");
 $router->post("/login", "AuthController@LoginTraitment");
-$router->get("/dashboard", "DashboardController@index");
+$router->get("/dashboard", "DashboardController@dashboard");
 $router->get("/register", "AuthController@showRegister");
 $router->get("/logout", "AuthController@LogOut");
 

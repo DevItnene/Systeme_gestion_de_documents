@@ -2,7 +2,6 @@
 namespace App\Controllers;
 
 use App\Core\Auth;
-use App\Core\Router;
 
 class AuthController {
 
@@ -52,7 +51,7 @@ class AuthController {
     // Traiter l'inscription
     public function register() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /Register');
+            header('Location: /register');
             exit;
         }
 
@@ -67,7 +66,7 @@ class AuthController {
             exit;
         } else {
             $_SESSION["error"] = "Cette adresse email est déjà utilisée.";
-            header("Location: /Register");
+            header("Location: /register");
             exit;
         }
     }

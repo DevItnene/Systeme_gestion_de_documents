@@ -60,7 +60,7 @@ class Auth {
 
     public function requireAuth() {
         if (!$this->isLoggedIn()) {
-            header('Location: /Views/Auth/Login.php');
+            header('Location: /login');
             exit;
         }
     }
@@ -70,7 +70,7 @@ class Auth {
 
         if (!$this->isAdmin()) {
             $_SESSION['error'] = 'Accès non autorisé.';
-            header('Location: /Dashboard');
+            header('Location: /dashboard');
             exit;
         }
     }

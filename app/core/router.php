@@ -35,12 +35,27 @@ class Router {
 
     private function notFound() {
         http_response_code(404);
-        echo "<div class='container'>";
-        echo "<h1>404 - Page non trouvée</h1>";
-        echo "<p><a href='/'>Retour à l'accueil</a></p>";
-        echo "</div>";
-
+        echo "
+                <!DOCTYPE html>
+                <html lang='fr'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>404 - Page non trouvée</title>
+                    <!-- Bootstrap CSS -->
+                    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
+                </head>
+                <body>
+                    <div class='container text-center'>
+                        <h1>404 - Page non trouvée</h1>
+                        <p><a href='/'>Retour à l'accueil</a></p>
+                        </div>
+                </body>
+                </html>
+            ";
+        
         exit;
     }
 }
 ?>
+

@@ -1,4 +1,4 @@
-// Animation simple pour les inputs
+// Animation pour les inputs
 document.addEventListener("DOMContentLoaded", function () {
   const inputs = document.querySelectorAll(".form-control");
   inputs.forEach((input) => {
@@ -14,4 +14,11 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-
+// Animation pour les cartes
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.animationDelay = (index * 0.1) + 's';
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+});
