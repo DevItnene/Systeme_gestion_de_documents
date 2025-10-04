@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Activer un lien du sidebar
-links = document.querySelectorAll('.sidebar-item')
-currentUrl = location.pathname;
+const links = document.querySelectorAll('.sidebar-item')
+const currentUrl = location.pathname;
 
 links.forEach(link => {
   if (link.getAttribute('href') === currentUrl) {
@@ -35,15 +35,55 @@ links.forEach(link => {
   }
 })
 
-// Manipulations des actions des bouttons tables
-links_action = document.querySelectorAll('.links-action a')
-console.log(links_action);
+// Le modal de modification
+document.getElementById('editModal').addEventListener('show.bs.modal', function (event) {
+  const button = event.relatedTarget;
+  if (button.classList.contains('edit-btn')) {
+    const id = button.getAttribute('data-id')
+    const title = button.getAttribute('data-title')
+    const description = button.getAttribute('data-description')
+    const categoty_id = button.getAttribute('data-category-id')
+    const is_public = button.getAttribute('data-is-public')
 
-// links_action.forEach(link => {
-//   link.addEventListener('click', () => {
+    document.getElementById('doc_id').value = id
+    document.getElementById('title').value = title
+    document.getElementById('description').value = description
+    document.getElementById('category_id').value = categoty_id
+
+    const selectedElement = document.getElementById('is_public')
+
+    selectedElement.value = is_public
+
+    document.getElementById('editModalLabel').textContent = "Modifier le document"
+  }
+})
+
+// Gestion de la soumission du formulaire d'édition
+document.getElementById('editDocumentForm').addEventListener('submit', function(e) {
+    e.preventDefault()
     
-//   })
-// })
+    const formData = new FormData(this)
+    
+    fetch('/documents/update', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Fermer le modal et recharger la page            
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide()
+            location.reload()
+        } else {
+            alert('Erreur: ' + (data.message || 'Erreur lors de la modification'))
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error)
+        alert('Erreur lors de la modification du document')
+    })
+})
+
 
 
 

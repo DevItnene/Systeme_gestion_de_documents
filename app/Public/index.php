@@ -14,7 +14,10 @@ $router->get("/dashboard", "DashboardController@dashboard");
 $router->get("/register", "AuthController@showRegister");
 $router->get("/logout", "AuthController@LogOut");
 
+// Routes du dashboard
 $router->get("/documents","DocumentController@documentList");
+$router->post("/documents/update","DocumentController@update");
+
 
 $router->run();
 
