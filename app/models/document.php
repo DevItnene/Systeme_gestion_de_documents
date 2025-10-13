@@ -35,14 +35,12 @@ class Document {
             $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
                                                         FROM  documents d
                                                         LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.user_id = ?
-                                                        ORDER BY d.created_at DESC", [$id])
+                                                        WHERE d.id = ?", [$id])
             :
             $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
                                                         FROM  documents d
                                                         LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.user_id = ?
-                                                        ORDER BY d.created_at DESC", [$id, $_SESSION["user_id"]]);
+                                                        WHERE d.id = ? AND d.user_id = ?", [$id, $_SESSION["user_id"]]);
         
         return $results;
     }
@@ -58,24 +56,43 @@ class Document {
     }
 
     // Methode pour une requete de update d'un document
-    public function updateDocment($id, $data) {
-        return $this->db->query("UPDATE documents 
-                                      SET title = ?, description = ?,
-                                      category_id = ?, is_public = ?, updated_at = NOW()
-                                      WHERE id = ?",
-                                      [
-                                        $data["title"], 
-                                        $data["description"], 
-                                        $data["category_id"], 
-                                        $data["is_public"],
-                                        $id
-                                      ]
-        
-        );
+    public function updateDocument($id, $data) {
+        if (array_Key_exists('file_name', $data)) {
+            return $this->db->query("UPDATE documents 
+                                          SET title = ?, description = ?, file_name = ?, file_path = ?,
+                                          file_size = ?, file_type = ?, category_id = ?, is_public = ?,
+                                          updated_at = NOW() WHERE id = ?",
+                                          [
+                                            $data["title"], 
+                                            $data["description"],
+                                            $data["file_name"],
+                                            $data["file_path"],
+                                            $data["file_size"],
+                                            $data["file_type"],
+                                            $data["category_id"], 
+                                            $data["is_public"],
+                                            $id
+                                          ]
+            
+            );
+        } else {
+            return $this->db->query("UPDATE documents 
+                                          SET title = ?, description = ?, category_id = ?,
+                                          is_public = ?, updated_at = NOW() WHERE id = ?",
+                                          [
+                                            $data["title"], 
+                                            $data["description"],
+                                            $data["category_id"], 
+                                            $data["is_public"],
+                                            $id
+                                          ]
+            
+            );
+        }
     }
 
     // Methode pour une requete de supprission d'un document
-    public function deleteDocment($id) {
+    public function deleteDocument($id) {
         return $this->db->query("DELETE FROM documents WHERE id = ?", [$id]);
     }
 

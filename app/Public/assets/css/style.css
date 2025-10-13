@@ -475,6 +475,10 @@ a {
     font-weight: 600;
 }
 
+#SuccessMsgBox {
+    display: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .login-right {

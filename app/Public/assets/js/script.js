@@ -53,8 +53,15 @@ document.getElementById('editModal').addEventListener('show.bs.modal', function 
     const selectedElement = document.getElementById('is_public')
 
     selectedElement.value = is_public
-
+    
     document.getElementById('editModalLabel').textContent = "Modifier le document"
+  } else if (button.classList.contains('delete-btn')) {
+    const id = button.getAttribute('data-id')
+    const title = button.getAttribute('data-title')
+
+    document.getElementById('delete_document_title').value = title
+    document.getElementById('delete_document_id').value = id
+    
   }
 })
 
@@ -71,9 +78,14 @@ document.getElementById('editDocumentForm').addEventListener('submit', function(
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Fermer le modal et recharger la page            
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide()
-            location.reload()
+            const msgBox = document.getElementById('SuccessMsgBox')
+            const span = document.querySelector('.successMessage')
+            span.innerHTML = data.message
+            msgBox.style.display = 'block'
+            setInterval(() => {
+              bootstrap.Modal.getInstance(document.getElementById('editModal')).hide()
+              location.reload()
+            }, 1100);
         } else {
             alert('Erreur: ' + (data.message || 'Erreur lors de la modification'))
         }
@@ -84,6 +96,82 @@ document.getElementById('editDocumentForm').addEventListener('submit', function(
     })
 })
 
+// Le modal de suppression
+document.getElementById('deleteModal').addEventListener('show.bs.modal', function (event) {
+  const button = event.relatedTarget;
+   if (button.classList.contains('delete-btn')) {
+    const id = button.getAttribute('data-id')
+    const title = button.getAttribute('data-title')
+
+    document.getElementById('delete_document_title').innerHTML = title
+    document.getElementById('delete_document_id').value = id
+    
+  }
+})
+
+// Gestion de la soumission du formulaire de suppression
+document.getElementById('deleteDocumentForm').addEventListener('submit', function (e) {
+  e.preventDefault()
+
+  // if (!confirm('Êtes-vous absolument sûr de vouloir supprimer ce document ?')) {
+  //   return;
+  // }
+
+  const formData = new FormData(this)
+
+  fetch('/documents/delete', {
+    method: "POST",
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+        location.reload();
+    } else {
+        alert('Erreur: ' + (data.message || 'Erreur lors de la suppression'));
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    alert('Erreur lors de la suppression du document');
+  });
+
+})
+
+
+// Le modal pour voir les details
+document.getElementById('viewModal').addEventListener('show.bs.modal', function(e) {
+  const button = e.relatedTarget
+  if (button.classList.contains('view-btn')) {
+    const title = button.getAttribute('data-title')
+    const description = button.getAttribute('data-description')
+    const category = button.getAttribute('data-category')
+    const is_public = button.getAttribute('data-is-public')
+    const file_name = button.getAttribute('data-file-name')
+    const file_type = button.getAttribute('data-file-type')
+    const file_size = button.getAttribute('data-file-size')
+    const download_count = button.getAttribute('data-download-count')
+    const created_at = button.getAttribute('data-created-at')
+
+    document.getElementById('view_title').textContent = title
+    document.getElementById('view_description').textContent = description || 'Aucune description';
+    document.getElementById('view_category').textContent = category || 'Non catégorisé'
+    document.getElementById('view_filename').textContent = file_name
+    document.getElementById('view_type').textContent = file_type
+    document.getElementById('view_size').textContent = (file_size / 1024).toFixed(2) + ' KB'
+    document.getElementById('view_downloads').textContent = download_count
+    document.getElementById('view_date').textContent = created_at
+
+    const statusBadge = document.getElementById('view_status')
+    statusBadge.textContent = is_public == 1 ? 'Public' : 'Privé'
+    statusBadge.className = 'badge ' + (is_public == 1 ? 'bg-success' : 'bg-warning');
+    
+    // Lien de téléchargement
+    document.getElementById('view_download_link').href = `/documents/download/${document.id}`;
+  }
+
+})
 
 
 

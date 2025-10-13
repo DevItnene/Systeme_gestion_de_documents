@@ -17,6 +17,7 @@ $router->get("/logout", "AuthController@LogOut");
 // Routes du dashboard
 $router->get("/documents","DocumentController@documentList");
 $router->post("/documents/update","DocumentController@update");
+$router->post("/documents/delete","DocumentController@delete");
 
 
 $router->run();

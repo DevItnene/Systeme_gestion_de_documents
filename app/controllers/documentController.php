@@ -28,9 +28,9 @@ class DocumentController {
     }
 
     // Methode pour récupérer les données d'un document
-    public function get($id) {
+    public function getDocument($id) {
         $document = $this->documents_model->getDocumentById(intval($id));
-        echo json_encode($document);
+        return $document;
     }
 
     // Methode pour mettre a jour un document
@@ -41,33 +41,97 @@ class DocumentController {
             return;
         }
 
-        $id = $_POST["doc_id"] ?? null;
-        $title = $_POST["title"] ?? '';
-        $description = $_POST["description"] ?? '';
-        $category_id = $_POST["category_id"] ?? null;
-        $is_public = isset($_POST["is_public"]) ? 1 : 0;
+        $id = htmlentities(trim($_POST["doc_id"])) ?? null;
+        $title = htmlentities(trim($_POST["title"])) ?? '';
+        $description = htmlentities(trim($_POST["description"])) ?? '';
+        $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
+        $is_public = intval(htmlentities(trim($_POST["is_public"])));
 
-        $document = $this->documents_model->getDocumentById(intval($id));
-        $user = $this->auth->user();
+        if (!empty($_FILES["document_file"]["name"])) {
+            if ($_FILES['document_file']['error'] !== \UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'Erreur lors du téléchargement du fichier.']);
+                return;
+            }
 
-        // if (!$document || (!$this->auth->isAdmin() && $document['user_id'] != $user['id'])) {
-        //     http_response_code(403);
+            $file_name = $_FILES['document_file']['name'];
+            $file_type = "application/" . pathinfo($file_name, \PATHINFO_EXTENSION);
+            $file_size = $_FILES["document_file"]["size"];
+            $file_path = "/uploads/documents/$file_name";
+            $target_path = __DIR__ . "/../Public/assets/uploads/documents/" . $file_name;
+
+            if (move_uploaded_file($_FILES['document_file']['tmp_name'], $target_path)) {
+                $data = [
+                        'title'=> $title,
+                        'description'=> $description,
+                        'file_name'=> $file_name,
+                        'file_path'=> $file_path,
+                        'file_size'=> $file_size,
+                        'file_type'=> $file_type,
+                        'category_id'=> $category_id,
+                        'is_public'=> $is_public
+                    ];
+                // echo json_encode(['success'=> true, 'message'=> 'Fichier déplacé avec succès']);
+            } else {
+                echo json_encode(['success'=> false, 'message'=> 'Échec du déplacement du fichier']);
+                return;
+            }
+        } else {
+            $data = [
+                    'title'=> $title,
+                    'description'=> $description,
+                    'category_id'=> $category_id,
+                    'is_public'=> $is_public
+                ];
+        }
+
+        // $document = $this->documents_model->getDocumentById(intval($id));
+        // $user = $this->auth->user();
+
+        // if (!isset($document) || ($this->auth->isAdmin() == false && ($document['user_id'] != $user['id']))) { 
+        //     // http_response_code(403);
         //     echo json_encode(['success'=> false,'message'=> 'Accès non autorisé']);
         //     return;
         // }
 
-        $success = $this->documents_model->updateDocment($id, [
-            'title'=> $title,
-            'description'=> $description,
-            'category_id'=> $category_id,
-            'is_public'=> $is_public
-        ]);
-        if ($success) {
-            echo json_encode(['success'=> true,'message'=> 'Document modifié avec succès']);
-        } else  {
-            echo json_encode(['success'=> false,'message'=> 'Erreur lors de la modification']);
+        $document = $this->documents_model->getDocumentById(intval($id));
+
+        if (
+                $document[0]['title'] === $title && 
+                $document[0]['description'] === $description && 
+                $document[0]['category_id'] === $category_id &&
+                $document[0]['is_public'] === $is_public &&
+                $_FILES['document_file']['name'] === ''
+            ) {
+                echo json_encode(['success'=> true,'message'=> 'Aucune information modifiée.']);
+                return;
+            } else {
+                $success = $this->documents_model->updateDocument($id, $data);
+                if ($success) {
+                    echo json_encode(['success'=> true,'message'=> 'Document modifié avec succèss.']);
+                } else  {
+                    echo json_encode(['success'=> false,'message'=> 'Erreur lors de la modification']);
+                }  
+            }
+
+    }
+
+    // Methode pour supprimer un document
+    public function delete() {
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            http_response_code(405);
+            echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
+            return;
         }
 
+        $id = $_POST["delete_document_id"] ?? null;
+
+        $success = $this->documents_model->deleteDocument($id);
+
+        if ($success) {
+            echo json_encode(['success'=> true,'message'=> $id]);
+        } else  {
+            echo json_encode(['success'=> false,'message'=> 'Erreur lors de la suppression du document']);
+        }
     }
 
 }
