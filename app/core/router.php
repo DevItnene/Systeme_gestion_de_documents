@@ -1,6 +1,8 @@
 <?php
 namespace App\Core;
 
+use App\Controllers\DocumentController;
+
 class Router {
     private $routes = [];
     public function get($path, $controllerAction) {
@@ -16,6 +18,13 @@ class Router {
         $path = parse_url($_SERVER['REQUEST_URI'], \PHP_URL_PATH); // /Login
         $path = str_replace('/index.php','',$path);
         $path = $path ?: '/';
+
+        if (preg_match('#^/documents/download/(\d+)$#', $path, $matches ) && $method === 'GET') {
+            $id = $matches[1];
+            $controller = new DocumentController();
+            $controller->download($id);
+            return;
+        }
 
         if (isset($this->routes[$method][$path])) {
             $controllerAction = $this->routes[$method][$path];
@@ -47,9 +56,9 @@ class Router {
                 </head>
                 <body>
                     <div class='container text-center'>
-                        <h1>404 - Page non trouvée</h1>
+                        <h1 class='mt-5'>404 - Page non trouvée</h1>
                         <p><a href='/'>Retour à l'accueil</a></p>
-                        </div>
+                    </div>
                 </body>
                 </html>
             ";

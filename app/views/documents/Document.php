@@ -20,9 +20,11 @@ class Document {
         $table = "
             <div class='d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom'>
                 <h1 class='h2'>Mes Documents</h1>
-                <button class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#uploadModal'>
-                    <i class='fas fa-upload me-2'></i>Uploader un document
-                </button>
+                <a href='/documents/upload'>
+                    <button class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#uploadModal'>
+                        <i class='fas fa-upload me-2'></i>Uploader un document
+                    </button>
+                </a>
             </div>
         ";
         if (empty($documents)) {
@@ -75,7 +77,7 @@ class Document {
                                 $file_type = 'N/A';
                             }
                             
-                                $is_public = ($document['is_public']==1) ? 'Oui' : 'Non';
+                            $is_public = ($document['is_public']==1) ? 'Oui' : 'Non';
 
                             $table .= "
                                 <tr>
@@ -165,7 +167,9 @@ class Document {
                                 </div>                                
                                 <div class='mb-3 row'>
                                     <label for='document_file' class='col-form-label'>Changer le document</label>
-                                    <input type='file' class='form-control' id='document_file' name='document_file' accept='application/*'>
+                                    <input type='file' id='document_file' name='document_file' class='form-control'
+                                    accept='.pdf,.txt,.pptx,.xlsx,.docx,.csv,.json'>
+                                    <div class='invalid-feedback' id='invalidType'></div>
                                 </div>
                                 <div class='mb-3 row'>
                                     <label for='is_public' class='col-form-label'>Public</label>
@@ -175,8 +179,8 @@ class Document {
                                     </select>
                                 </div>
                                 <div class='modal-footer'>
-                                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                                    <button type='submit' class='btn btn-primary' id='save-btn'>Save changes</button>
+                                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Fermer</button>
+                                    <button type='submit' class='btn btn-primary' id='save-btn'>Enregistrer</button>
                                 </div>
                             </div>
                         </form>
@@ -227,14 +231,14 @@ class Document {
                             <div class='modal-body'>
                                 <div class='row'>
                                     <div class='col-md-6'>
-                                        <h6>Informations générales</h6>
+                                        <h4 class='text-center'>Informations générales</h4>
                                         <p><strong>Titre :</strong> <span id='view_title'></span></p>
                                         <p><strong>Description :</strong> <span id='view_description'></span></p>
                                         <p><strong>Catégorie :</strong> <span id='view_category'></span></p>
                                         <p><strong>Statut :</strong> <span id='view_status' class='badge'></span></p>
                                     </div>
                                     <div class='col-md-6'>
-                                        <h6>Informations techniques</h6>
+                                        <h4 class='text-center'>Informations techniques</h4>
                                         <p><strong>Nom du fichier :</strong> <span id='view_filename'></span></p>
                                         <p><strong>Type :</strong> <span id='view_type'></span></p>
                                         <p><strong>Taille :</strong> <span id='view_size'></span></p>

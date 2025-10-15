@@ -479,6 +479,34 @@ a {
     display: none;
 }
 
+/* ===== Page Upload ===== */
+
+.form-card {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+}
+
+.card {
+    border-radius: 10px !important;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+.add-btn {
+    transition: all 0.2s ease !important;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.add-btn:hover {
+    box-shadow: 0 0px 10px var(--primary-color);
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
     .login-right {

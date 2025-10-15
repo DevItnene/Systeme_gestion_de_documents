@@ -75,7 +75,7 @@
                 <i class='fas fa-bell'></i>
             </button>
 
-            <button class='btn-icon' title='Paramètres'>
+            <button class='btn-icon d-none d-sm-block' title='Paramètres'>
                 <i class='fas fa-cog'></i>
             </button>
 
@@ -83,7 +83,7 @@
                 <div class='user-avatar'>
                     <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                 </div>
-                <div class='user-info'>
+                <div class='user-info d-none d-sm-block'>
                     <h5><?= $_SESSION['user_name'] ?></h5>
                     <p><?= ($this->auth->isAdmin() ? 'Administrateur' : 'Utilisateur') ?></p>
                 </div>

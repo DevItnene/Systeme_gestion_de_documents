@@ -1,3 +1,54 @@
+(() => {
+  'use strict';
+
+  const forms = document.querySelectorAll('form');
+  const allowedExtensions = ['pdf', 'text', 'pptx', 'xlsx', 'docx', 'csv', 'json'];
+
+  forms.forEach(form => {
+    form.addEventListener('submit', event => {
+      let isFileValid = true;
+      const fileInput = form.querySelector('#document_file');
+      const file = fileInput.files[0];
+      
+      if (file) {
+        const fileName = file.name;
+        const extension = fileName.split('.').pop().toLowerCase();
+        
+        
+        if (!allowedExtensions.includes(extension)) {
+          isFileValid = false;
+
+          fileInput.classList.add('is-invalid');
+          fileInput.classList.remove('is-valid');
+
+          fileInput.value = '';
+
+          const feedback = fileInput.nextElementSibling;
+          if (feedback) {
+            feedback.textContent = `Format non autorisé : .${extension}. Formats acceptés : ${allowedExtensions.join(', ')}`;
+          }
+        } else {
+          fileInput.classList.remove('is-invalid');
+          fileInput.classList.add('is-valid');
+        }
+      } else {
+        // Si le fichier est obligatoire
+        // isFileValid = false;
+        fileInput.classList.remove('is-invalid');
+        fileInput.classList.remove('is-valid');
+      }
+
+      if (!form.checkValidity() || !isFileValid) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+
+
 // Animation pour les inputs
 document.addEventListener("DOMContentLoaded", function () {
   const inputs = document.querySelectorAll(".form-control");
@@ -80,12 +131,16 @@ document.getElementById('editDocumentForm').addEventListener('submit', function(
         if (data.success) {
             const msgBox = document.getElementById('SuccessMsgBox')
             const span = document.querySelector('.successMessage')
+            const invalidType = document.getElementById('invalidType')
             span.innerHTML = data.message
             msgBox.style.display = 'block'
+            let second
+            (invalidType.textContent == '') ? second = 1500 : second = 3500
+
             setInterval(() => {
               bootstrap.Modal.getInstance(document.getElementById('editModal')).hide()
               location.reload()
-            }, 1100);
+            }, second);
         } else {
             alert('Erreur: ' + (data.message || 'Erreur lors de la modification'))
         }
@@ -139,11 +194,11 @@ document.getElementById('deleteDocumentForm').addEventListener('submit', functio
 
 })
 
-
 // Le modal pour voir les details
 document.getElementById('viewModal').addEventListener('show.bs.modal', function(e) {
   const button = e.relatedTarget
   if (button.classList.contains('view-btn')) {
+    const id = button.getAttribute('data-id')
     const title = button.getAttribute('data-title')
     const description = button.getAttribute('data-description')
     const category = button.getAttribute('data-category')
@@ -168,9 +223,36 @@ document.getElementById('viewModal').addEventListener('show.bs.modal', function(
     statusBadge.className = 'badge ' + (is_public == 1 ? 'bg-success' : 'bg-warning');
     
     // Lien de téléchargement
-    document.getElementById('view_download_link').href = `/documents/download/${document.id}`;
+    document.getElementById('view_download_link').href = `/documents/download/${id}`;
   }
 
+})
+
+// JS pour ajout d'un document
+document.getElementById('addform').addEventListener('submit', function(e) {
+  e.preventDefault()
+
+  const formData = new FormData(this)
+
+  fetch('/documents/insert', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+        const msgBox = document.getElementById('SuccessMsgBox')
+        const span = document.querySelector('.successMessage')
+        span.innerHTML = data.message
+        msgBox.style.display = 'block'
+      } else {
+          alert('Erreur: ' + (data.message || 'Erreur lors de l\'ajout du document'))
+      }
+  })
+  .catch(error => {
+    console.error('Erreur:', error)
+    alert('Erreur lors de l\'ajout du document')
+  })
 })
 
 

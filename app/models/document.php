@@ -96,6 +96,31 @@ class Document {
         return $this->db->query("DELETE FROM documents WHERE id = ?", [$id]);
     }
 
+    // Methode pour ajouter un document
+    public function insertDocument($data) {
+        return $this->db->query("INSERT INTO documents (id, title, description, file_name, file_path, file_size, file_type, category_id, user_id, is_public, download_count, created_at, updated_at) VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())", [
+            $data["title"],
+            $data["description"],
+            $data["file_name"],
+            $data["file_path"],
+            $data["file_size"],
+            $data["file_type"],
+            $data["category_id"],
+            $data["user_id"],
+            $data["is_public"],
+        ]);
+    }
+
+    // Methode pour incrementer le nombre de telechargement
+    public function incrementDownloadCount($id) {
+        return $this->db->query("UPDATE documents SET download_count = download_count + 1 WHERE id = ?", [$id]);
+    }
+
+    // Methode pour recuperer les documents partagés
+    public function getSharedDocument($user_id) {
+        return $this->db->query("SELECT * documents WHERE shared_by = ?", [$user_id]);
+    }
+
     // TODO : Apres faut mettre dans category
     public function getAllCategories() {
         $results = $this->db->queryFetchAll("SELECT * FROM categories");

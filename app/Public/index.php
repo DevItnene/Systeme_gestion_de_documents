@@ -18,6 +18,9 @@ $router->get("/logout", "AuthController@LogOut");
 $router->get("/documents","DocumentController@documentList");
 $router->post("/documents/update","DocumentController@update");
 $router->post("/documents/delete","DocumentController@delete");
+$router->get("/documents/download/[i:id]","DocumentController@download");
+$router->get("/documents/upload","DocumentController@uploadPage");
+$router->post("/documents/insert","DocumentController@insert");
 
 
 $router->run();
