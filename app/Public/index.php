@@ -12,6 +12,7 @@ $router->get("/login", "AuthController@showLogin");
 $router->post("/login", "AuthController@LoginTraitment");
 $router->get("/dashboard", "DashboardController@dashboard");
 $router->get("/register", "AuthController@showRegister");
+$router->post("/register", "AuthController@register");
 $router->get("/logout", "AuthController@LogOut");
 
 // Routes du dashboard
@@ -21,6 +22,8 @@ $router->post("/documents/delete","DocumentController@delete");
 $router->get("/documents/download/[i:id]","DocumentController@download");
 $router->get("/documents/upload","DocumentController@uploadPage");
 $router->post("/documents/insert","DocumentController@insert");
+$router->post("/documents/shareDocument","DocumentController@shareDocument");
+// $router->get("/documents/insert","DocumentController@insert");
 
 
 $router->run();

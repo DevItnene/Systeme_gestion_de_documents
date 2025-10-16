@@ -1,22 +1,42 @@
 <?php
 namespace App\Views\Documents;
 
+use App\Core\Auth;
+use App\Models\User;
+use App\Core\Database;
 use App\Models\Document as DocumentModel;
 
 class Document {
 
     private $docs;
-
+    private $users;
+    private $auth;
+    private $db;
     public function __construct() {
         $this->docs = new DocumentModel();
+        $this->users = new User();
+        $this->auth = new Auth();
+        $this->db = new Database();
     }
 
     public function displayDocument($id) {
-        $document = $this->docs->getDocumentById(intval($id));
+        return $this->docs->getDocumentById(intval($id));
     }
 
     public function displayDocuments() {
-        $documents = $this->docs->getAllDocuments();
+        $search = isset($_GET['q']) ? htmlentities(trim($_GET['q'])) : null;
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        
+        // Pagination
+        $limit = 10;
+        $search ? $totalPages = $this->docs->getDocumentCounts($search)['Total']
+        : $totalPages = $this->docs->getDocumentCounts()['Total'];
+        $pages = ceil($totalPages / $limit);
+        $offset = ($page - 1) * $limit;
+        
+        $search ? $documents = $this->docs->searchDocument($search, $limit, $offset)
+                : $documents = $this->docs->getAllDocuments($limit, $offset);
+        
         $table = "
             <div class='d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom'>
                 <h1 class='h2'>Mes Documents</h1>
@@ -43,7 +63,7 @@ class Document {
                     </tr>
                 </thead>
                 <tbody>
-                <td colspan='99' class='text-center'>Aucun document disponible !</td>
+                    <td colspan='99' class='text-center'>Aucun document disponible !</td>
                 </tbody>
             </table>";
         } else {
@@ -62,7 +82,7 @@ class Document {
                             <th scope='col'>Public</th>
                             <th scope='col'>Téléchargements</th>
                             <th scope='col'>Date de création</th>
-                            <th scope='col'>Action</th>
+                            <th scope='col'>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -91,6 +111,11 @@ class Document {
                                     <td>{$document['download_count']}</td>
                                     <td>{$document['created_at']}</td>
                                     <td class='links-action'>
+                                        <a href='#' class='share-btn' data-bs-toggle='modal' data-bs-target='#shareDocumentModal' 
+                                            data-id='{$document['id']}'
+                                            data-title='{$document['title']}'>
+                                            <i class='bi bi-share-fill'></i>
+                                        </a>
                                         <a href='#' class='view-btn' data-bs-toggle='modal' data-bs-target='#viewModal' 
                                             data-id='{$document['id']}'
                                             data-title='{$document['title']}'
@@ -124,7 +149,38 @@ class Document {
                 $table .= "
                     </tbody>
                 </table>
-            ";
+                <div class='d-flex justify-content-center align-items-center gap-3 mt-4'>";
+
+                // Le lien Precedent
+                $p_prev = ($page > 1) ? '?page=' . ($page - 1) : '#';
+                $p_prev .= $search ? '&q=' . urlencode($search) : '';
+                $style_prev = ($page <= 1) ? 'disabled opacity-70' : '';
+                $bool_prev = ($page <= 1) ? 'true' : 'false';
+                
+                $table .= "
+                    <a href='{$p_prev}' id='prevPage'
+                        class='btn btn-primary shadow-sm px-4 py-2 rounded-pill fw-semibold {$style_prev}'
+                        aria-disabled='{$bool_prev}'>
+                            ⬅️ Précédent
+                    </a>
+                    <span class='fw-semibold text-muted'>
+                        Page {$page} / {$pages}
+                    </span>
+                ";
+
+                // Le lien Suivant
+                $p_next = ($page < $pages) ? '?page=' . ($page + 1) : '#';
+                $p_next .= $search ? '&q=' . urlencode($search) : '';
+                $style_next = ($page >= $pages) ? 'disabled opacity-70' : '';
+                $bool_next = ($page >= $pages) ? 'true' : 'false';
+                
+                $table .= "
+                    <a href='{$p_next}' id='nextPage'
+                    class='btn btn-primary shadow-sm px-4 py-2 rounded-pill fw-semibold {$style_next}'
+                    aria-disabled='{$bool_next}'>
+                        Suivant ➡️
+                    </a>
+                </div>";
         }
 
         echo $table;
@@ -138,6 +194,11 @@ class Document {
                         <div class='modal-header'>
                             <h5 class='modal-title' id='editModalLabel'>Modal title</h5>
                             <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                        </div>
+                        <div class='alert alert-danger alert-dismissible fade show m-3 mb-0' id='dangerMsgBox' role='alert'>
+                            <i class='fas fa-exclamation-circle me-2'></i>
+                            <span class='dangerMessage'></span>
+                            <button type='button' class='btn-close' data-bs-dismiss='alert'></button>
                         </div>
                         <div class='alert alert-success alert-dismissible fade show m-3 mb-0' id='SuccessMsgBox' role='alert'>
                             <i class='fas fa-check-circle me-2'></i>
@@ -168,7 +229,8 @@ class Document {
                                 <div class='mb-3 row'>
                                     <label for='document_file' class='col-form-label'>Changer le document</label>
                                     <input type='file' id='document_file' name='document_file' class='form-control'
-                                    accept='.pdf,.txt,.pptx,.xlsx,.docx,.csv,.json'>
+                                        accept='.pdf,.txt,.pptx,.xlsx,.docx,.csv,.json'>
+                                    <small style='opacity: 0.7'>Les formats acceptés : pdf, text, pptx, xlsx, docx, csv, json</small>
                                     <div class='invalid-feedback' id='invalidType'></div>
                                 </div>
                                 <div class='mb-3 row'>
@@ -259,6 +321,80 @@ class Document {
             ";
         
         echo $viewModal;
+
+        $users = $this->users->getAllUsers();
+
+        $shareModal = "
+                    <!-- ===== MODAL DE PARTAGE DE DOCUMENT ===== -->
+                    <div class='modal fade' id='shareDocumentModal' tabindex='-1' aria-labelledby='shareDocumentModalLabel' aria-hidden='true'>
+                        <div class='modal-dialog'>
+                            <div class='modal-content'>
+                                <div class='modal-header'>
+                                    <h5 class='modal-title' id='shareDocumentModalLabel'>Partager le document</h5>
+                                    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Fermer'></button>
+                                </div>
+
+                                <div class='modal-body'>
+                                    <div class='alert alert-danger alert-dismissible fade show mb-4' id='dangerMsgShareBox' role='alert'>
+                                        <i class='fas fa-exclamation-circle me-2'></i>
+                                        <span class='dangerMessageShare'></span>
+                                        <button type='button' class='btn-close' data-bs-dismiss='alert'></button>
+                                    </div>
+                                    <div class='alert alert-success alert-dismissible fade show mb-4' id='SuccessMsgBoxShare' role='alert'>
+                                        <i class='fas fa-check-circle me-2'></i>
+                                        <span class='successMessageShare'></span>
+                                        <button type='button' class='btn-close' data-bs-dismiss='alert'></button>
+                                    </div>
+
+                                    <form id='shareDocumentForm' novalidate>
+                                        <input type='hidden' id='document_share_id' name='document_share_id'>
+
+                                        <!-- Title -->
+                                        <div class='mb-3'>
+                                            <label for='shareDocumentTitle' class='col-form-label'>Titre du document</label>
+                                            <input type='text' class='form-control' id='shareDocumentTitle' name='shareDocumentTitle'>
+                                        </div>
+
+                                        <!-- Select utilisateur -->
+                                        <div class='mb-3'>
+                                            <label for='shared_with_user_id' class='form-label'>Partager avec <span class='text-danger'>*</span></label>
+                                            <select class='form-select' id='shared_with_user_id' name='shared_with_user_id' required>
+                                                <option value='' disabled selected>-- Sélectionnez un utilisateur --</option>
+                                                ";
+                                                foreach ($users as $user) {
+                                                    if ($user["id"] != $_SESSION['user_id']) {
+                                                        $shareModal .=" <option value='{$user['id']}'> {$user['name']} </option>";
+                                                    } 
+                                                }
+                                            $shareModal .="
+                                            </select>
+                                            <div class='invalid-feedback'>Veuillez sélectionner un ou plusieurs utilisateurs.</div>
+                                        </div>
+
+                                        <!-- Select permission -->
+                                        <div class='mb-3'>
+                                            <label for='permission' class='form-label'>Permission <span class='text-danger'>*</span></label>
+                                            <select class='form-select' id='permission' name='permission' required>
+                                                <option value='' disabled selected>-- Sélectionnez une permission --</option>
+                                                <option value='edit'>Éditer</option>
+                                                <option value='download'>Télécharger</option>
+                                                <option value='view'>Visualiser</option>
+                                            </select>
+                                            <div class='invalid-feedback'>Veuillez sélectionner une option.</div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class='modal-footer'>
+                                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Annuler</button>
+                                    <button type='submit' class='btn btn-primary' form='shareDocumentForm'>Partager</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            ";
+        echo $shareModal;
     }
 }
 ?>

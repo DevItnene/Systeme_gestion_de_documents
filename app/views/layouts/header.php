@@ -8,6 +8,7 @@
     <link rel='stylesheet' href='/assets/css/style.css'>
     <!-- Bootstrap CSS -->
     <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <!-- Font Awesome -->
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>
     <!-- Google Fonts -->
@@ -66,11 +67,13 @@
 
     <!-- ===== HEADER ===== -->
     <div class='header'>
-        <div class='search-bar'>
-            <input type='text' placeholder='🔍 Rechercher un document, un utilisateur...'>
-        </div>
+        <form action="" class="w-50 ">
+            <div class='search-bar'>
+                <input type='text' placeholder='🔍 Rechercher un document par title, catégorie...' name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+            </div>
+        </form>
 
-        <div class='header-actions'>
+        <div class='header-actions '>
             <button class='btn-icon' title='Notifications'>
                 <i class='fas fa-bell'></i>
             </button>

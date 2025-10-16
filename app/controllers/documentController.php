@@ -49,6 +49,9 @@ class DocumentController {
         $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
         $is_public = intval(htmlentities(trim($_POST["is_public"])));
 
+        $documents = $this->documents_model->getAllDocuments();
+        $results = [];
+
         if (!empty($_FILES["document_file"]["name"])) {
             if ($_FILES['document_file']['error'] !== \UPLOAD_ERR_OK) {
                 echo json_encode(['success' => false, 'message' => 'Erreur lors du téléchargement du fichier.']);
@@ -61,29 +64,57 @@ class DocumentController {
             $file_path = "/uploads/documents/$file_name";
             $target_path = __DIR__ . "/../Public/assets/uploads/documents/" . $file_name;
 
-            if (move_uploaded_file($_FILES['document_file']['tmp_name'], $target_path)) {
-                $data = [
-                        'title'=> $title,
-                        'description'=> $description,
-                        'file_name'=> $file_name,
-                        'file_path'=> $file_path,
-                        'file_size'=> $file_size,
-                        'file_type'=> $file_type,
-                        'category_id'=> $category_id,
-                        'is_public'=> $is_public
-                    ];
-                // echo json_encode(['success'=> true, 'message'=> 'Fichier déplacé avec succès']);
+            foreach ($documents as $doc) {
+                if (stripos($doc['file_name'], $file_name) !== false) {
+                    $results[] = $doc;
+                }
+            }
+
+            if (empty($results)) {
+                if (move_uploaded_file($_FILES['document_file']['tmp_name'], $target_path)) {
+                    $data = [
+                            'title'=> $title,
+                            'description'=> $description,
+                            'file_name'=> $file_name,
+                            'file_path'=> $file_path,
+                            'file_size'=> $file_size,
+                            'file_type'=> $file_type,
+                            'category_id'=> $category_id,
+                            'is_public'=> $is_public
+                        ];
+                    // echo json_encode(['success'=> true, 'message'=> 'Fichier déplacé avec succès']);
+                } else {
+                    echo json_encode(['success'=> false, 'message'=> 'Échec du déplacement du fichier']);
+                    return;
+                }
             } else {
-                echo json_encode(['success'=> false, 'message'=> 'Échec du déplacement du fichier']);
+                echo json_encode(['success'=> false, 'message'=> 'Échec, le titre et/ou le nom du fichier est utilisé par un utilisateur.']);
                 return;
             }
         } else {
             $data = [
-                    'title'=> $title,
-                    'description'=> $description,
-                    'category_id'=> $category_id,
-                    'is_public'=> $is_public
-                ];
+                'title'=> $title,
+                'description'=> $description,
+                'category_id'=> $category_id,
+                'is_public'=> $is_public
+            ];
+            // foreach ($documents as $doc) {
+            //     if (stripos($doc['title'], $title) !== false) {
+            //         $results[] = $doc;
+            //     }
+            // }
+
+            // if (empty($results)) {
+            //     $data = [
+            //         'title'=> $title,
+            //         'description'=> $description,
+            //         'category_id'=> $category_id,
+            //         'is_public'=> $is_public
+            //     ];
+            // } else {
+            //     echo json_encode(['success'=> false, 'message'=> 'Le titre est utilisé par un autre utilisateur']);
+            //     return;
+            // }
         }
 
         // $document = $this->documents_model->getDocumentById(intval($id));
@@ -186,11 +217,15 @@ class DocumentController {
             return;
         }
 
+        $documents = $this->documents_model->getAllDocuments();
+
         $title = htmlentities(trim($_POST["title"])) ?? '';
         $description = htmlentities(trim($_POST["description"])) ?? '';
         $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
         $is_public = intval(htmlentities(trim($_POST["is_public"])));
         $user = $this->auth->user();
+
+        $results = [];
 
         if (!empty($_FILES["document_file"]["name"])) {
             if ($_FILES['document_file']['error'] !== \UPLOAD_ERR_OK) {
@@ -204,7 +239,14 @@ class DocumentController {
             $file_path = "/uploads/documents/$file_name";
             $target_path = __DIR__ . "/../Public/assets/uploads/documents/" . $file_name;
 
-            if (move_uploaded_file($_FILES['document_file']['tmp_name'], $target_path)) {
+            foreach ($documents as $doc) {
+                if (stripos($doc['file_name'], $file_name) !== false || stripos($doc['title'], $title) !== false) {
+                    $results[] = $doc;
+                }
+            }
+
+            if (empty($results)) {
+                if (move_uploaded_file($_FILES['document_file']['tmp_name'], $target_path)) {
                 $data = [
                         'title'=> $title,
                         'description'=> $description,
@@ -217,18 +259,56 @@ class DocumentController {
                         'is_public'=> $is_public
                     ];
                 // echo json_encode(['success'=> true, 'message'=> 'Fichier déplacé avec succès']);
+                } else {
+                    echo json_encode(['success'=> false, 'message'=> 'Échec du déplacement du document']);
+                    return;
+                }
             } else {
-                echo json_encode(['success'=> false, 'message'=> 'Échec du déplacement du fichier']);
+                echo json_encode(['success'=> false, 'message'=> 'Échec, le titre et/ou le nom du fichier est utilisé par un utilisateur.']);
                 return;
             }
         }
         $success = $this->documents_model->insertDocument($data);
         if ($success) {
-            echo json_encode(['success'=> true,'message'=> 'Document ajouté avec succèss.']);
+            echo json_encode(['success'=> true,'message'=> 'Document uploadé avec succèss.']);
         } else  {
             echo json_encode(['success'=> false,'message'=> 'Erreur lors de l\'ajout du document']);
         }  
 
+    }
+
+    // Methode pour partager un document
+    public function shareDocument() {
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            http_response_code(405);
+            echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
+            return;
+        }
+
+        if (!array_key_exists('permission', $_POST) || !array_key_exists('shared_with_user_id', $_POST)) {
+            echo json_encode(['success' => false, 'message' => 'Veuillez renseigné les champs obligatoires.']);
+            return;
+        }
+
+        $id = htmlentities(trim($_POST["document_share_id"])) ?? null;
+        $shared_with_user_id = htmlentities(trim($_POST['shared_with_user_id'])) ?? null;
+        $permission = htmlentities(trim($_POST['permission'])) ?? null;
+        $user = $this->auth->user();
+        $shared_by = $user['id'];
+
+        $data = [
+            'document_id' => $id,
+            'shared_with_user_id'=> $shared_with_user_id,
+            'permission'=> $permission,
+            'shared_by'=> $shared_by,
+        ];
+
+        $success = $this->documents_model->sharingDocument($data);
+        if ($success) {
+            echo json_encode(['success'=> true,'message'=> 'Document partagé avec succèss.']);
+        } else  {
+            echo json_encode(['success'=> false,'message'=> 'Erreur lors du partage du document']);
+        }
     }
 
     // Methode pour afficher le formulaire d'ajout

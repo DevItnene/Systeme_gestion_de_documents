@@ -78,7 +78,7 @@ namespace App\Views\Auth;
                                 <?php endif; ?>
 
                                 <!-- Formulaire de connexion -->
-                                <form method="POST" action="/login">
+                                <form method="POST" action="/login" novalidate>
                                     <div class="form-floating">
                                         <input type="email" class="form-control" id="email" name="email" 
                                                placeholder="name@example.com" required

@@ -10,14 +10,16 @@ class User {
         $this->db = new Database();
     }
 
+    public function getAllUsers() {
+        return $this->db->queryFetchAll("SELECT * FROM users");
+    }
+
     public function findByEmail($email) {
-        $stmt = $this->db->queryFetch("SELECT * FROM users WHERE email = ?", [$email]);
-        return $stmt;
+        return $this->db->queryFetch("SELECT * FROM users WHERE email = ?", [$email]);
     }
 
     public function findById($id) {
-        $stmt = $this->db->queryFetch("SELECT id, name, email, role, created_at FROM users WHERE id = ?", [$id]);
-        return $stmt;
+        return $this->db->queryFetch("SELECT id, name, email, role, created_at FROM users WHERE id = ?", [$id]);
     }
 
     public function updateLastLogin($id) {

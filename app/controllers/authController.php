@@ -55,10 +55,16 @@ class AuthController {
             exit;
         }
 
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-        $password_confirm = $_POST['password_confirm'] ?? '';
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        $password = trim($_POST['password']);
+        $password_confirm = trim($_POST['password_confirm']);
+
+        if (empty($name) || empty($email) || empty($password) || empty($password_confirm)) {
+            $_SESSION["error"] = "Veuillez renseigné les champs obligatoires.";
+            header("Location: /register");
+            exit;
+        }
         
         if ($password == $password_confirm) {
             if ($this->auth->userModel->createUser($name, $email, $password)) {

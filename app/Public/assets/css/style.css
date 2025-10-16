@@ -26,6 +26,15 @@ a {
     text-decoration: none !important;
 }
 
+.search-bar {
+    display: none;
+}
+
+.links-action i {
+    font-size: 18px !important;
+    padding-right: 2px;
+}
+
 /* ===================== Css for Login page ===================== */
 
 .LoginBody {
@@ -475,7 +484,7 @@ a {
     font-weight: 600;
 }
 
-#SuccessMsgBox {
+#SuccessMsgBox, #dangerMsgBox, #dangerMsgShareBox, #SuccessMsgBoxShare {
     display: none;
 }
 
@@ -504,6 +513,29 @@ a {
 
 .add-btn:hover {
     box-shadow: 0 0px 10px var(--primary-color);
+}
+
+/* ===== Pagination du tableau ===== */
+
+#prevPage, #nextPage {
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+#prevPage:hover, #nextPage:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+}
+
+#pageIndicator {
+  font-size: 1rem;
+}
+
+.btn.disabled, 
+.btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+  pointer-events: none;
 }
 
 

@@ -44,11 +44,10 @@
                                 <?php endif; ?>
 
                                 <!-- Formulaire d'inscription -->
-                                <form method="POST" action="/register">
+                                <form method="POST" action="/register" novalidate>
                                     <div class="form-floating">
                                         <input type="text" class="form-control" id="name" name="name" 
-                                               placeholder="Votre nom complet" required
-                                               value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
+                                               placeholder="Votre nom complet" required >
                                         <label for="name">
                                             <i class="fas fa-user me-2"></i>Nom complet
                                         </label>
@@ -56,8 +55,7 @@
                                     
                                     <div class="form-floating">
                                         <input type="email" class="form-control" id="email" name="email" 
-                                               placeholder="name@example.com" required
-                                               value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                                               placeholder="name@example.com" required >
                                         <label for="email">
                                             <i class="fas fa-envelope me-2"></i>Adresse email
                                         </label>
