@@ -28,13 +28,17 @@
             </a>
 
             <a href='/documents' class='sidebar-item'>
-                <i class='fas fa-folder'></i>
+                <i class="bi bi-folder-fill"></i>
                 <span>Mes Documents</span>
             </a>
 
-            <a href='/documents/upload' class='sidebar-item'>
+            <a href='/upload' class='sidebar-item'>
                 <i class='fas fa-upload'></i>
                 <span>Uploader</span>
+            </a>
+            <a href='/shareDocuments' class='sidebar-item'>
+                <i class="bi bi-folder-symlink-fill"></i>
+                <span>Documents partagés</span>
             </a>
 
             <div class='sidebar-divider'></div>

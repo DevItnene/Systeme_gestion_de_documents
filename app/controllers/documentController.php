@@ -30,6 +30,16 @@ class DocumentController {
 
     }
 
+    // Fonction pour lister tous les documents partagés
+    public function shareDocumentList() {
+        require_once __DIR__ ."/../Views/Layouts/Header.php";
+
+        $this->documents->displayShareDocuments();
+
+        require_once __DIR__ ."/../Views/Layouts/Footer.php";
+    }
+
+
     // Methode pour récupérer les données d'un document
     public function getDocument($id) {
         return $this->documents_model->getDocumentById(intval($id));
@@ -291,19 +301,22 @@ class DocumentController {
         }
 
         $id = htmlentities(trim($_POST["document_share_id"])) ?? null;
-        $shared_with_user_id = htmlentities(trim($_POST['shared_with_user_id'])) ?? null;
-        $permission = htmlentities(trim($_POST['permission'])) ?? null;
+        $shared_with_users_id = $_POST['shared_with_user_id'] ?? null;
+        $permission = $_POST['permission'] ?? null;
         $user = $this->auth->user();
         $shared_by = $user['id'];
 
-        $data = [
-            'document_id' => $id,
-            'shared_with_user_id'=> $shared_with_user_id,
-            'permission'=> $permission,
-            'shared_by'=> $shared_by,
-        ];
+        foreach ($shared_with_users_id as $shared_with_user_id) {
+           $data = [
+                'document_id' => $id,
+                'shared_with_user_id'=> $shared_with_user_id,
+                'permission'=> $permission,
+                'shared_by'=> $shared_by,
+            ];
 
-        $success = $this->documents_model->sharingDocument($data);
+            $success = $this->documents_model->sharingDocument($data);
+        }
+        
         if ($success) {
             echo json_encode(['success'=> true,'message'=> 'Document partagé avec succèss.']);
         } else  {

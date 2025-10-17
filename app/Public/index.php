@@ -15,15 +15,15 @@ $router->get("/register", "AuthController@showRegister");
 $router->post("/register", "AuthController@register");
 $router->get("/logout", "AuthController@LogOut");
 
-// Routes du dashboard
+// Routes 
 $router->get("/documents","DocumentController@documentList");
 $router->post("/documents/update","DocumentController@update");
 $router->post("/documents/delete","DocumentController@delete");
 $router->get("/documents/download/[i:id]","DocumentController@download");
-$router->get("/documents/upload","DocumentController@uploadPage");
+$router->get("/upload","DocumentController@uploadPage");
 $router->post("/documents/insert","DocumentController@insert");
 $router->post("/documents/shareDocument","DocumentController@shareDocument");
-// $router->get("/documents/insert","DocumentController@insert");
+$router->get("/shareDocuments","DocumentController@shareDocumentList");
 
 
 $router->run();

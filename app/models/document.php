@@ -29,6 +29,23 @@ class Document {
         return $results;
     }
 
+    // Methode pour une requete pour recuperer tous les documents
+    public function getAllShareDocuments($limit = null, $offset = null) {
+        ($this->auth->isAdmin()) ?
+            $results = $this->db->queryFetchAll("  SELECT d_s.*, c.name as category_name
+                                                        FROM  document_shares d_s
+                                                        LEFT JOIN categories c ON d_s.category_id = c.id
+                                                        ORDER BY d_s.created_at DESC LIMIT $limit OFFSET $offset")
+            :
+            $results = $this->db->queryFetchAll("  SELECT d_s.*, c.name as category_name
+                                                        FROM  document_shares d_s
+                                                        LEFT JOIN categories c ON d_s.category_id = c.id
+                                                        WHERE d_s.user_id = ?
+                                                        ORDER BY d_s.created_at DESC LIMIT  $limit OFFSET $offset", [$_SESSION["user_id"]]);
+        
+        return $results;
+    }
+
     // Methode pour une requete afin de recuperer un document
     public function getDocumentById($id) {
         ($this->auth->isAdmin()) ?
@@ -163,7 +180,7 @@ class Document {
         return $this->db->query("UPDATE documents SET download_count = download_count + 1 WHERE id = ?", [$id]);
     }
 
-    // Methode pour recuperer les documents partagés
+    // Methode pour recuperer un document partagé
     public function getSharedDocument($user_id) {
         return $this->db->query("SELECT * documents WHERE shared_by = ?", [$user_id]);
     }

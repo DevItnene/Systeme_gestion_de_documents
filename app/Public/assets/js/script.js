@@ -296,13 +296,6 @@ if (shareDocumentForm) {
             bootstrap.Modal.getInstance(document.getElementById('shareDocumentModal')).hide()
             location.reload()
           }, 1500);
-        } else {
-          document.querySelector('.dangerMessageShare').textContent = data.message || 'Une erreur est survenue.';
-          document.getElementById('dangerMsgShareBox').style.display = 'block';
-          document.querySelector('.invalid-feedback-share').style.display = 'block'
-          setTimeout(() => {
-            document.getElementById('dangerMsgShareBox').style.display = 'none';
-          }, 2000);
         }
     })
   })
