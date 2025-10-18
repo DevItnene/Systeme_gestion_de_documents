@@ -28,7 +28,7 @@
             </a>
 
             <a href='/documents' class='sidebar-item'>
-                <i class="bi bi-folder-fill"></i>
+                <i class="bi bi-folder2-open me-2"></i>
                 <span>Mes Documents</span>
             </a>
 
@@ -37,8 +37,12 @@
                 <span>Uploader</span>
             </a>
             <a href='/shareDocuments' class='sidebar-item'>
-                <i class="bi bi-folder-symlink-fill"></i>
-                <span>Documents partagés</span>
+                <i class="bi bi-folder-symlink"></i>
+                <span>Documents Partagés</span>
+            </a>
+            <a href='/publicDocuments' class='sidebar-item'>
+                <i class="bi bi-file-earmark-richtext me-2"></i>
+                <span>Documents Publics</span>
             </a>
 
             <div class='sidebar-divider'></div>

@@ -39,6 +39,15 @@ class DocumentController {
         require_once __DIR__ ."/../Views/Layouts/Footer.php";
     }
 
+    // Fonction pour lister tous les documents publics
+    public function publicDocumentList() {
+        require_once __DIR__ ."/../Views/Layouts/Header.php";
+
+        $this->documents->displayPublicDocuments();
+
+        require_once __DIR__ ."/../Views/Layouts/Footer.php";
+    }
+
 
     // Methode pour récupérer les données d'un document
     public function getDocument($id) {
@@ -52,22 +61,42 @@ class DocumentController {
             echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
             return;
         }
-
+                
         $id = htmlentities(trim($_POST["doc_id"])) ?? null;
         $title = htmlentities(trim($_POST["title"])) ?? '';
         $description = htmlentities(trim($_POST["description"])) ?? '';
-        $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
-        $is_public = intval(htmlentities(trim($_POST["is_public"])));
+        $category_id = intval($_POST["category_id"]) ?? null;
+        $is_public = intval($_POST["is_public"]);
+
+        if ($title == '') {
+            echo json_encode(['success' => false, 'message' => 'Le titre du document ne doit pas être vide']);
+            return;
+        }
 
         $documents = $this->documents_model->getAllDocuments();
         $results = [];
 
-        if (!empty($_FILES["document_file"]["name"])) {
-            if ($_FILES['document_file']['error'] !== \UPLOAD_ERR_OK) {
-                echo json_encode(['success' => false, 'message' => 'Erreur lors du téléchargement du fichier.']);
-                return;
-            }
+        
+        
+        // echo json_encode(['success'=> false,'message'=> $file_name]);
+        // die();
 
+        if (!empty($_FILES["document_file"]["name"])) {
+
+            switch ($_FILES['document_file']['error']) {
+                case UPLOAD_ERR_INI_SIZE:
+                    echo json_encode(['success' => false, 'message' => 'Le fichier dépasse la taille maximale autorisée par le serveur.']);
+                    return;
+                case UPLOAD_ERR_FORM_SIZE:
+                    echo json_encode(['success' => false, 'message' => 'Le fichier dépasse la taille maximale autorisée par le formulaire HTML.']);
+                    return;
+                case UPLOAD_ERR_PARTIAL:
+                    echo json_encode(['success' => false, 'message' => 'Le fichier n\'a été que partiellement uploadé.']);
+                    return;
+                case UPLOAD_ERR_NO_FILE:
+                    echo json_encode(['success' => false, 'message' => 'Aucun fichier n\'a été envoyé.']);
+                    return;
+            }
             $file_name = $_FILES['document_file']['name'];
             $file_type = "application/" . pathinfo($file_name, \PATHINFO_EXTENSION);
             $file_size = $_FILES["document_file"]["size"];
@@ -94,11 +123,11 @@ class DocumentController {
                         ];
                     // echo json_encode(['success'=> true, 'message'=> 'Fichier déplacé avec succès']);
                 } else {
-                    echo json_encode(['success'=> false, 'message'=> 'Échec du déplacement du fichier']);
+                    echo json_encode(['success'=> false, 'message'=> 'Échec lors du déplacement du fichier']);
                     return;
                 }
             } else {
-                echo json_encode(['success'=> false, 'message'=> 'Échec, le titre et/ou le nom du fichier est utilisé par un utilisateur.']);
+                echo json_encode(['success'=> false, 'message'=> 'Échec, le nom du fichier est utilisé par un utilisateur.']);
                 return;
             }
         } else {
@@ -108,6 +137,7 @@ class DocumentController {
                 'category_id'=> $category_id,
                 'is_public'=> $is_public
             ];
+            
             // foreach ($documents as $doc) {
             //     if (stripos($doc['title'], $title) !== false) {
             //         $results[] = $doc;
@@ -126,7 +156,7 @@ class DocumentController {
             //     return;
             // }
         }
-
+        
         // $document = $this->documents_model->getDocumentById(intval($id));
         // $user = $this->auth->user();
 
@@ -158,6 +188,59 @@ class DocumentController {
 
     }
 
+    // Methode pour mettre a jour un document partagé
+    public function updateShareDocument() {
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            http_response_code(405);
+            echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
+            return;
+        }
+                
+        $id = htmlentities(trim($_POST["doc_id"])) ?? null;
+        $title = htmlentities(trim($_POST["title"])) ?? '';
+        $description = htmlentities(trim($_POST["description"])) ?? '';
+        $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
+
+        if ($title == '') {
+            echo json_encode(['success' => false, 'message' => 'Le titre du document ne doit pas être vide']);
+            return;
+        }
+        
+        $data = [
+            'title'=> $title,
+            'description'=> $description,
+            'category_id'=> $category_id
+        ];
+
+        // $document = $this->documents_model->getDocumentById(intval($id));
+        // $user = $this->auth->user();
+
+        // if (!isset($document) || ($this->auth->isAdmin() == false && ($document['user_id'] != $user['id']))) { 
+        //     // http_response_code(403);
+        //     echo json_encode(['success'=> false,'message'=> 'Accès non autorisé']);
+        //     return;
+        // }
+
+        $document = $this->documents_model->getDocumentById($id); 
+
+        if (
+                $document[0]['title'] === $title && 
+                $document[0]['description'] === $description && 
+                $document[0]['category_id'] === $category_id
+            ) {
+                echo json_encode(['success'=> true,'message'=> 'Aucune information modifiée.']);
+                return;
+            } else {
+                $success = $this->documents_model->updateDocument($id, $data, true);
+                if ($success) {
+                    echo json_encode(['success'=> true,'message'=> 'Document modifié avec succèss.']);
+                } else  {
+                    echo json_encode(['success'=> false,'message'=> 'Erreur  de la modification']);
+                }  
+            }
+
+    }
+
     // Methode pour supprimer un document
     public function delete() {
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -167,8 +250,12 @@ class DocumentController {
         }
 
         $id = $_POST["delete_document_id"] ?? null;
-
-        $success = $this->documents_model->deleteDocument($id);
+        $document_share_id = $_POST["delete_document_share_id"] ?? null;
+        if ($id) {
+            $success = $this->documents_model->deleteDocument($id);
+        } else {
+            $success = $this->documents_model->deleteDocument($document_share_id, true);
+        }
 
         if ($success) {
             echo json_encode(['success'=> true,'message'=> $id]);
