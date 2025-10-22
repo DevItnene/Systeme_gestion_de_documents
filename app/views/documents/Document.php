@@ -10,13 +10,9 @@ class Document {
 
     private $docs;
     private $users;
-    private $auth;
-    private $db;
     public function __construct() {
         $this->docs = new DocumentModel();
         $this->users = new User();
-        $this->auth = new Auth();
-        $this->db = new Database();
     }
 
     public function displayDocument($id) {
@@ -41,7 +37,6 @@ class Document {
     }
 
     public function displayShareDocuments() {
-        $users = $this->users->getAllUsers();
 
         $search = isset($_GET['q']) ? htmlentities(trim($_GET['q'])) : null;
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -59,6 +54,12 @@ class Document {
         $table = "
             <div class='d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom'>
                 <h1 class='h2'>{$totalPages} Documents Partagés</h1>
+            </div>
+            <!-- Message d'erreur -->
+            <div id='dangerMsgShare' class='alert alert-danger alert-dismissible fade d-none' role='alert'>
+                <i class='bi bi-exclamation-triangle-fill me-2'></i>
+                <span class='dangerMessageShare'>Erreur ici</span>
+                <button type='button' class='btn-close custom-close' aria-label='Fermer'></button>
             </div>
         ";
         if (empty($documents)) {
@@ -117,42 +118,47 @@ class Document {
                                     <td>{$document['download_count']}</td>
                                     <td>{$document['created_at']}</td>
                                     <td class='links-action'>
-                                        <a href='#' class='download-btn' id='download_link' 
-                                            data-id='{$document['document_id']}'>
-                                            <i class='fas fa-download'></i>
-                                        </a>
-                                        <a href='#' class='view-btn' data-bs-toggle='modal' data-bs-target='#viewModal' 
-                                            data-id='{$document['document_id']}'
-                                            data-title='{$document['title']}'
-                                            data-description='{$document['description']}'
-                                            data-category='{$document['category_name']}'
-                                            data-file-name='{$document['file_name']}'
-                                            data-file-type='{$document['file_type']}'
-                                            data-file-size='{$document['file_size']}'
-                                            data-shared-by='{$document['username']}'
-                                            data-download-count='{$document['download_count']}'
-                                            data-created-at='{$document['created_at']}'>
-                                            <i class='fa-solid fa-eye'></i>
-                                        </a>
-                                        <a href='#' class='edit-btn' data-bs-toggle='modal' data-bs-target='#editModal' 
-                                            data-id='{$document['document_id']}'
-                                            data-title='{$document['title']}'
-                                            data-description='{$document['description']}'
-                                            data-category-id='{$document['category_id']}'>
-                                            <i class='fa-solid fa-pen-to-square'></i>
-                                        </a>
-                                        ";
-                                        if ($_SESSION["user_role"] == "admin") {
+                                ";
+                                        if ($document['permission'] == "download") {
                                             $table .= "
-                                                <a href='#' class='delete-btn' data-bs-toggle='modal' data-bs-target='#deleteModal' 
-                                                    data-id='{$document['id']}'
-                                                    data-title='{$document['title']}'>
-                                                    <i class='fa-solid fa-trash' style='color: lightcoral;'></i>
+                                                <a href='#' class='download-btn' id='download_link' 
+                                                    data-id='{$document['document_id']}'>
+                                                    <i class='fas fa-download'></i>
+                                                </a>
+                                            ";
+                                        } else if ($document["permission"] == "view") {
+                                            $table .= "
+                                                <a href='#' class='view-btn' data-bs-toggle='modal' data-bs-target='#viewModal' 
+                                                    data-id='{$document['document_id']}'
+                                                    data-title='{$document['title']}'
+                                                    data-description='{$document['description']}'
+                                                    data-category='{$document['category_name']}'
+                                                    data-file-name='{$document['file_name']}'
+                                                    data-file-type='{$document['file_type']}'
+                                                    data-file-size='{$document['file_size']}'
+                                                    data-shared-by='{$document['username']}'
+                                                    data-download-count='{$document['download_count']}'
+                                                    data-created-at='{$document['created_at']}'>
+                                                    <i class='fa-solid fa-eye'></i>
+                                                </a>
+                                            ";
+                                        } else if ($document["permission"] == "edit") {
+                                            $table .= "
+                                                <a href='#' class='edit-btn' data-bs-toggle='modal' data-bs-target='#editModal' 
+                                                    data-id='{$document['document_id']}'
+                                                    data-title='{$document['title']}'
+                                                    data-description='{$document['description']}'
+                                                    data-category-id='{$document['category_id']}'>
+                                                    <i class='fa-solid fa-pen-to-square'></i>
                                                 </a>
                                             ";
                                         }
-                                        
-                                        "
+                                        $table .= "
+                                        <a href='#' class='delete-btn' data-bs-toggle='modal' data-bs-target='#deleteModal' 
+                                            data-id='{$document['id']}'
+                                            data-title='{$document['title']}'>
+                                            <i class='fa-solid fa-trash' style='color: lightcoral;'></i>
+                                        </a>
                                     </td>
                                 </tr>
                             ";
@@ -309,9 +315,6 @@ class Document {
                             </div>
                             <div class='modal-footer'>
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Fermer</button>
-                                <a href='#' id='view_download_link' class='btn btn-primary'>
-                                    <i class='fas fa-download me-2'></i>Télécharger
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -322,7 +325,6 @@ class Document {
     }
 
     public function displayPublicDocuments() {
-        $users = $this->users->getAllUsers();
 
         $search = isset($_GET['q']) ? htmlentities(trim($_GET['q'])) : null;
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -334,7 +336,7 @@ class Document {
         $pages = ceil($totalPages / $limit);
         $offset = ($page - 1) * $limit;
         
-        $search ? $documents = $this->docs->searchShareDocument($search, $limit, $offset)
+        $search ? $documents = $this->docs->searchPublicDocument($search, $limit, $offset)
                 : $documents = $this->docs->getAllPublicsDocuments($limit, $offset);
         
         $table = "
@@ -372,7 +374,7 @@ class Document {
                             <th scope='col'>Catégorie</th>
                             <th scope='col'>Auteur</th>
                             <th scope='col'>Téléchargements</th>
-                            <th scope='col'>Date de partage</th>
+                            <th scope='col'>Date de création</th>
                             <th scope='col'>Actions</th>
                         </tr>
                     </thead>
@@ -549,7 +551,7 @@ class Document {
                             <div class='modal-footer'>
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Annuler</button>
                                 <form id='deleteDocumentForm' method='POST' action='/documents/delete' style='display: inline;'>
-                                    <input type='hidden' id='delete_document_share_id' name='delete_document_share_id'>
+                                    <input type='hidden' id='delete_document_id' name='delete_document_id'>
                                     <button type='submit' class='btn btn-danger'>Supprimer définitivement</button>
                                 </form>
                             </div>

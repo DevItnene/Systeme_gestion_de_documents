@@ -48,7 +48,6 @@ class DocumentController {
         require_once __DIR__ ."/../Views/Layouts/Footer.php";
     }
 
-
     // Methode pour récupérer les données d'un document
     public function getDocument($id) {
         return $this->documents_model->getDocumentById(intval($id));
@@ -75,12 +74,7 @@ class DocumentController {
 
         $documents = $this->documents_model->getAllDocuments();
         $results = [];
-
         
-        
-        // echo json_encode(['success'=> false,'message'=> $file_name]);
-        // die();
-
         if (!empty($_FILES["document_file"]["name"])) {
 
             switch ($_FILES['document_file']['error']) {
@@ -221,7 +215,7 @@ class DocumentController {
         //     return;
         // }
 
-        $document = $this->documents_model->getDocumentById($id); 
+        $document = $this->getDocument(intval($id));
 
         if (
                 $document[0]['title'] === $title && 
@@ -235,7 +229,7 @@ class DocumentController {
                 if ($success) {
                     echo json_encode(['success'=> true,'message'=> 'Document modifié avec succèss.']);
                 } else  {
-                    echo json_encode(['success'=> false,'message'=> 'Erreur  de la modification']);
+                    echo json_encode(['success'=> false,'message'=> 'Erreur lors de la modification']);
                 }  
             }
 
@@ -264,6 +258,39 @@ class DocumentController {
         }
     }
 
+    public function canDownload($id) {
+        header('Content-Type: application/json');
+
+        if (!isset($id) || !is_numeric($id)) {
+            echo json_encode(["success" => false, "message" => "ID invalide."]);
+            return;
+        }
+
+        $id = intval($id);
+        $document_share = $this->documents_model->getSharedDocument($id);
+
+        // Si le document n’est pas partagé, on vérifie s’il est public
+        $document = $this->documents_model->getDocumentById($id);
+
+        if (!$document) {
+            echo json_encode(["success" => false, "message" => "Document introuvable."]);
+            return;
+        }
+
+        if ($document[0]['is_public'] == 1) {
+            echo json_encode(["success" => true]);
+            return;
+        }
+
+        // Vérifier la permission de partage
+        if (!$document_share || $document_share[0]["permission"] !== "download") {
+            echo json_encode(["success" => false, "message" => "Vous n'avez pas la permission de télécharger ce document."]);
+            return;
+        }
+
+        echo json_encode(["success" => true]);
+    }
+
     // Methode pour telecharger un document
     public function download($id) {
         if (!isset($id) || !is_numeric($id)) {
@@ -272,7 +299,6 @@ class DocumentController {
         }
 
         $id = intval($id);
-
         $document = $this->getDocument($id);
 
         if (!$document) {
@@ -320,14 +346,29 @@ class DocumentController {
         $description = htmlentities(trim($_POST["description"])) ?? '';
         $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
         $is_public = intval(htmlentities(trim($_POST["is_public"])));
-        $user = $this->auth->user();
 
+        // if (empty($title) || empty($category_id) || empty($is_public) || empty($_FILES["document_file"]["name"])) {
+        //     echo json_encode(["success"=> false,"message"=> ""]);
+        // }
+
+        $user = $this->auth->user();
         $results = [];
 
         if (!empty($_FILES["document_file"]["name"])) {
-            if ($_FILES['document_file']['error'] !== \UPLOAD_ERR_OK) {
-                echo json_encode(['success' => false, 'message' => 'Erreur lors du téléchargement du fichier.']);
-                return;
+
+            switch ($_FILES['document_file']['error']) {
+                case UPLOAD_ERR_INI_SIZE:
+                    echo json_encode(['success' => false, 'message' => 'Le fichier dépasse la taille maximale autorisée par le serveur.']);
+                    return;
+                case UPLOAD_ERR_FORM_SIZE:
+                    echo json_encode(['success' => false, 'message' => 'Le fichier dépasse la taille maximale autorisée par le formulaire HTML.']);
+                    return;
+                case UPLOAD_ERR_PARTIAL:
+                    echo json_encode(['success' => false, 'message' => 'Le fichier n\'a été que partiellement uploadé.']);
+                    return;
+                case UPLOAD_ERR_NO_FILE:
+                    echo json_encode(['success' => false, 'message' => 'Aucun fichier n\'a été envoyé.']);
+                    return;
             }
 
             $file_name = $_FILES['document_file']['name'];
@@ -392,6 +433,22 @@ class DocumentController {
         $permission = $_POST['permission'] ?? null;
         $user = $this->auth->user();
         $shared_by = $user['id'];
+
+        if ($shared_with_users_id[0] == 'everyone') {
+            $data = [
+                'document_id' => $id,
+                'is_public'=> '1',
+            ];
+
+           $success = $this->documents_model->isPublicDocument($data);
+            if ($success) {
+                echo json_encode(['success'=> true,'message'=> 'Document rendu public avec succèss.']);
+                return;
+            } else  {
+                echo json_encode(['success'=> false,'message'=> 'Erreur lors du partage du document']);
+                return;
+            } 
+        }
 
         foreach ($shared_with_users_id as $shared_with_user_id) {
            $data = [

@@ -54,7 +54,7 @@ class Upload
                             <!-- Catégorie -->
                             <div class='mb-3'>
                                 <label for='category_id' class='form-label'>Catégorie <span class='text-danger'>*</span></label>
-                                <select class='form-select' id='category_id' name='category_id'>
+                                <select class='form-select' id='category_id' name='category_id' required>
                                     <option value='' disabled selected>-- Sélectionnez une catégorie --</option>
                                     ";
                                         foreach ($categories as $category) {

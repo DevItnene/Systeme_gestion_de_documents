@@ -20,9 +20,11 @@ $router->get("/documents","DocumentController@documentList");
 $router->post("/documents/update","DocumentController@update");
 $router->post("/documents/delete","DocumentController@delete");
 $router->get("/documents/download/[i:id]","DocumentController@download");
+$router->get("/documents/canDownload/[i:id]","DocumentController@canDownload");
+
 
 $router->get("/upload","DocumentController@uploadPage");
-$router->post("/documents/insert","DocumentController@insert");
+$router->post("/upload/insert","DocumentController@insert");
 
 $router->post("/documents/shareDocument","DocumentController@shareDocument");
 $router->get("/shareDocuments","DocumentController@shareDocumentList");

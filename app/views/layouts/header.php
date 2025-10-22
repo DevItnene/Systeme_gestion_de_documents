@@ -77,7 +77,7 @@
     <div class='header'>
         <form action="" class="w-50 ">
             <div class='search-bar'>
-                <input type='text' placeholder='🔍 Rechercher un document par title, catégorie...' name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                <input type='text' placeholder='🔍 Rechercher un document par title, catégorie, utilisateurs' name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
             </div>
         </form>
 

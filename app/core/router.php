@@ -26,6 +26,13 @@ class Router {
             return;
         }
 
+        if (preg_match('#^/documents/canDownload/(\d+)$#', $path, $matches) && $method === 'GET') {
+            $id = $matches[1];
+            $controller = new DocumentController();
+            $controller->canDownload($id);
+            return;
+        }
+
         if (isset($this->routes[$method][$path])) {
             $controllerAction = $this->routes[$method][$path];
             list($controllerName, $action) = explode('@', $controllerAction);

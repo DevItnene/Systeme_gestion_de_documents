@@ -21,19 +21,12 @@ class Document {
                                                     ORDER BY d.created_at DESC");
         } 
         
-        ($this->auth->isAdmin()) ?
-            $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
-                                                        FROM  documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        ORDER BY d.created_at DESC LIMIT $limit OFFSET $offset")
-            :
-            $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
-                                                        FROM  documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.user_id = ?
-                                                        ORDER BY d.created_at DESC LIMIT $limit OFFSET $offset", [$_SESSION["user_id"]]);
+        return $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
+                                                FROM  documents d
+                                                LEFT JOIN categories c ON d.category_id = c.id
+                                                WHERE d.user_id = ?
+                                                ORDER BY d.created_at DESC LIMIT $limit OFFSET $offset", [$_SESSION["user_id"]]);
         
-        return $results;
     }
 
     // Methode pour une requete afin de recuperer un document
@@ -54,60 +47,39 @@ class Document {
 
     // Methode pour rechercher un ou plusieurs documents
     public function searchDocument($search, $limit = null, $offset = null) {
-        ($this->auth->isAdmin()) ?
-            $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name, u.name as user_name
-                                                        FROM documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        LEFT JOIN users u ON d.user_id = u.id
-                                                        WHERE d.title LIKE ? OR u.name LIKE ? OR c.name LIKE ?
-                                                        ORDER BY d.created_at DESC LIMIT $limit OFFSET $offset
-                                                    ", ["%$search%", "%$search%", "%$search%"])
-            :
-            $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
-                                                        FROM documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.user_id = ? AND (d.title LIKE ? OR c.name LIKE ?)
-                                                        ORDER BY d.created_at DESC LIMIT $limit OFFSET $offset
-                                                    ", [$_SESSION["user_id"], "%$search%", "%$search%"]);
-        
-        return $results;
+        return $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
+                                                FROM documents d
+                                                LEFT JOIN categories c ON d.category_id = c.id
+                                                WHERE d.user_id = ? AND (d.title LIKE ? OR c.name LIKE ?)
+                                                ORDER BY d.created_at DESC LIMIT $limit OFFSET $offset
+                                            ", [$_SESSION["user_id"], "%$search%", "%$search%"]);
+
     }
 
     // Methode pour une requete qui renvoyer le nombre total de documents
     public function getDocumentCounts($search = null) {
         if ($search != null) {
-            ($this->auth->isAdmin()) ?
-                $results = $this->db->queryFetch(" SELECT COUNT(*) as Total 
-                                                        FROM documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE (d.title LIKE ? OR c.name LIKE ?)
-                                                    ", ["%$search%", "%$search%"])
-                :
-                $results = $this->db->queryFetch("SELECT COUNT(*) as Total 
-                                                        FROM documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.user_id = ? AND (d.title LIKE ? OR c.name LIKE ?)
-                                                    ", [$_SESSION["user_id"], "%$search%", "%$search%"]);
-            return $results;
+            return $this->db->queryFetch("SELECT COUNT(*) as Total 
+                                                FROM documents d
+                                                LEFT JOIN categories c ON d.category_id = c.id
+                                                WHERE d.user_id = ? AND (d.title LIKE ? OR c.name LIKE ?)
+                                            ", [$_SESSION["user_id"], "%$search%", "%$search%"]);
+
         }
-        
-        ($this->auth->isAdmin()) ?
-            $results = $this->db->queryFetch("SELECT COUNT(*) as Total FROM documents")
-            :
-            $results = $this->db->queryFetch("SELECT COUNT(*) as Total FROM documents WHERE user_id = ?", [$_SESSION["user_id"]]);
-        
-        return $results;
+
+        return $this->db->queryFetch("SELECT COUNT(*) as Total FROM documents WHERE user_id = ?", [$_SESSION["user_id"]]);
+
     }
 
     // Methode pour recuperer un document partagé
-    public function getSharedDocument($user_id) {
-        return $this->db->query("SELECT * documents WHERE shared_by = ?", [$user_id]);
+    public function getSharedDocument($document_id) {
+        return $this->db->queryFetchAll("SELECT * FROM document_shares WHERE document_id = ?", [$document_id]);
     }
 
     // Methode pour une requete pour recuperer tous les documents partagés
     public function getAllShareDocuments($limit = null, $offset = null) {
 
-        return $this->db->queryFetchAll("  SELECT d_s.id, d_s.created_at, 
+        return $this->db->queryFetchAll("  SELECT d_s.id, d_s.created_at, d_s.permission,
                                                 d.id as document_id, d.title, d.description, d.file_name, d.file_size, d.file_type, d.download_count,
                                                 u.name as username, c.name as category_name, c.id as category_id
                                                 FROM  document_shares d_s
@@ -151,7 +123,7 @@ class Document {
 
     // Methode pour une requete de update d'un document
     public function updateDocument($id, $data, $shareDocument = null) {
-        if ($shareDocument != null) {
+        if ($shareDocument == true) {
             return $this->db->query("UPDATE documents 
                                           SET title = ?, description = ?, category_id = ?,
                                           updated_at = NOW() WHERE id = ?",
@@ -197,6 +169,18 @@ class Document {
             
             );
         }
+    }
+
+    // Methode pour une requete de rendre un document public
+    public function isPublicDocument($data) {
+        return $this->db->query("  UPDATE documents 
+                                        SET is_public = ?, updated_at = NOW() WHERE id = ?",
+                                        [
+                                            $data["is_public"],
+                                            $data["document_id"]
+                                        ]
+        
+        );
     }
 
     // Methode pour une requete de supprission d'un document
@@ -262,6 +246,38 @@ class Document {
         }
         
         return $this->db->queryFetch("SELECT COUNT(*) as Total FROM documents WHERE is_public = 1");
+    }
+
+    // Methode pour rechercher un ou plusieurs documents publics
+    public function searchPublicDocument($search, $limit = null, $offset = null) {
+           return $this->db->queryFetchAll("   SELECT
+                                                        d.id AS document_id,
+                                                        d.title,
+                                                        d.description,
+                                                        d.file_name,
+                                                        d.file_size,
+                                                        d.file_type,
+                                                        d.download_count,
+                                                        d.created_at,
+                                                        d_s.id,
+                                                        u.name AS username,
+                                                        c.name AS category_name,
+                                                        c.id AS category_id
+                                                    FROM documents d
+                                                    LEFT JOIN document_shares d_s ON d.id = d_s.document_id
+                                                    LEFT JOIN users u ON u.id = COALESCE(d_s.shared_by, d.user_id)
+                                                    LEFT JOIN categories c ON c.id = d.category_id
+                                                    WHERE 
+                                                        d.is_public = 1
+                                                        AND (
+                                                            d.title LIKE ?
+                                                            OR u.name LIKE ?
+                                                            OR c.name LIKE ?
+                                                        )
+                                                    GROUP BY d.id
+                                                    ORDER BY d.created_at DESC
+                                                    LIMIT  $limit OFFSET $offset
+                                                ", ["%$search%", "%$search%", "%$search%"]);
     }
 
     // Methode pour incrementer le nombre de telechargement

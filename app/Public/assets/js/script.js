@@ -83,7 +83,7 @@ const currentUrl = location.pathname;
 
 links.forEach(link => {
   if (link.getAttribute('href') === currentUrl) {
-    if (link.getAttribute('href') == '/documents' || link.getAttribute('href') == '/shareDocuments') {
+    if (link.getAttribute('href') == '/documents' || link.getAttribute('href') == '/shareDocuments' || link.getAttribute('href') == '/publicDocuments') {
       document.querySelector('.search-bar').style.display = "block"
     }
     link.classList.add('active')
@@ -252,7 +252,7 @@ if (deleteDocumentForm) {
 
     const currentUrl = location.pathname;
 
-    if (currentUrl == '/documents') {
+    if (currentUrl == '/documents'  || currentUrl == '/publicDocuments') {
       fetch('/documents/delete', {
         method: "POST",
         body: formData
@@ -271,7 +271,7 @@ if (deleteDocumentForm) {
         alert('Erreur lors de la suppression du document');
       });
 
-    } else {
+    } else if (currentUrl == '/shareDocuments') {
       fetch('/shareDocuments/delete', {
         method: "POST",
         body: formData
@@ -321,7 +321,7 @@ if (viewModal) {
       document.getElementById('view_date').textContent = created_at
 
       const currentUrl = location.pathname
-      if (currentUrl == '/shareDocuments') {
+      if (currentUrl == '/shareDocuments' || currentUrl == '/publicDocuments') {
         const shared_by = button.getAttribute('data-shared-by')
         document.getElementById('view_status').textContent = shared_by
       } else {
@@ -336,14 +336,51 @@ if (viewModal) {
   });
 }
 
-// // Telecharger un document partagé
+// Telecharger un document partagé
 const download_btn = document.querySelectorAll('.download-btn')
 
 if (download_btn) {
-  download_btn.forEach(link => {
-    link.addEventListener('click', function () {
-      const id = link.getAttribute('data-id');
-      link.href = `/documents/download/${id}`;
+  download_btn.forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault()
+
+      const id = btn.getAttribute('data-id');
+      
+      fetch(`/documents/canDownload/${id}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          window.location.href = `/documents/download/${id}`;
+        } else {
+          console.log(data.message);
+
+          const msgBox = document.getElementById('dangerMsgShare');
+          const msgText = document.querySelector('.dangerMessageShare');
+          const closeBtn = document.querySelector('.custom-close');
+
+          closeBtn.addEventListener('click', () => {
+            msgBox.classList.add('d-none');
+          });
+
+          msgText.textContent = data.message || "Téléchargement non autorisé.";
+
+          msgBox.classList.remove('d-none');
+          msgBox.classList.add('show');
+
+          if (msgBox.hideTimeout) {
+            clearTimeout(msgBox.hideTimeout);
+          }
+
+          msgBox.hideTimeout = setTimeout(() => {
+            msgBox.classList.remove('show');
+            msgBox.classList.add('d-none');
+          }, 5000);
+
+        }
+      })
+      .catch(error => {
+        console.error('Erreur :', error);
+      })
     })
   })
 }
@@ -356,7 +393,7 @@ if (shareModal) {
     if (button.classList.contains('share-btn')) {
       const id = button.getAttribute('data-id');
       const title = button.getAttribute('data-title')
-
+      
       document.getElementById('document_share_id').value = id
       document.getElementById('shareDocumentTitle').value = title
     }
@@ -387,6 +424,8 @@ if (shareDocumentForm) {
             bootstrap.Modal.getInstance(document.getElementById('shareDocumentModal')).hide()
             location.reload()
           }, 1500);
+        } else {
+          console.log(data.message);
         }
     })
   })
@@ -398,11 +437,11 @@ if (addForm) {
   addForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
-    fetch('/documents/insert', {
+    fetch('/upload/insert', {
       method: 'POST',
       body: formData
     })
-    .then(r => r.json())
+    .then(response => response.json())
     .then(data => {
       if (data.success) {
         document.querySelector('.successMessage').textContent = data.message;
@@ -422,7 +461,7 @@ if (addForm) {
     })
     .catch(error => {
       console.error('Erreur:', error);
-      document.querySelector('.dangerMessage').textContent = 'Erreur lors de l’envoi du formulaire.';
+      document.querySelector('.dangerMessage').textContent = 'Erreur lors de la soumission du formulaire.';
       document.getElementById('dangerMsgBox').style.display = 'block';
 
       setTimeout(() => {
