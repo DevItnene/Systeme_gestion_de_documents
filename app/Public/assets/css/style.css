@@ -490,7 +490,7 @@ a {
 
 /* ======= Div pour le messages ======= */
 
-#SuccessMsgBox, #dangerMsgBox, #dangerMsgShareBox, #SuccessMsgBoxShare {
+#SuccessMsgBox, #dangerMsgBox, #dangerMsgShareBox, #SuccessMsgBoxShare, #dangerCatMsg, #SuccessCatMsg {
     display: none;
 }
 

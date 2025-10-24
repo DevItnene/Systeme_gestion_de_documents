@@ -44,6 +44,10 @@
                 <i class="bi bi-file-earmark-richtext me-2"></i>
                 <span>Documents Publics</span>
             </a>
+            <a href='/Categories' class='sidebar-item'>
+                <i class="bi bi-bookmarks"></i>
+                <span>Catégories</span>
+            </a>
 
             <div class='sidebar-divider'></div>
 

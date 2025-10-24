@@ -3,19 +3,26 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Views\Documents\Upload;
+use App\Views\Documents\Category;
 use App\Views\Documents\Document;
+use App\Models\Category as CategoryModel;
 use App\Models\Document as DocumentModel;
+
 class DocumentController {
 
     private $auth;
     private $documents;
+    private $categories;
     private $documents_model;
+    private $categories_models;
     private $upload;
     public function __construct() {
         $this->auth = new Auth();
         $this->auth->requireAuth();
         $this->documents = new Document();
         $this->documents_model = new DocumentModel();
+        $this->categories = new Category();
+        $this->categories_models = new CategoryModel();
         $this->upload = new Upload();
     }
 
@@ -55,6 +62,10 @@ class DocumentController {
 
     // Methode pour mettre a jour un document
     public function update() {
+        header('Content-Type: application/json');
+        ini_set('display_errors', 1);
+        error_reporting(\E_ALL);
+
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             http_response_code(405);
             echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
@@ -151,22 +162,21 @@ class DocumentController {
             // }
         }
         
-        // $document = $this->documents_model->getDocumentById(intval($id));
-        // $user = $this->auth->user();
-
-        // if (!isset($document) || ($this->auth->isAdmin() == false && ($document['user_id'] != $user['id']))) { 
-        //     // http_response_code(403);
-        //     echo json_encode(['success'=> false,'message'=> 'Accès non autorisé']);
-        //     return;
-        // }
-
         $document = $this->getDocument(intval($id));
 
+        if (!isset($document[0])) {
+            // http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Document introuvable']);
+            return;
+        }
+
+        $current = $document[0];
+
         if (
-                $document[0]['title'] === $title && 
-                $document[0]['description'] === $description && 
-                $document[0]['category_id'] === $category_id &&
-                $document[0]['is_public'] === $is_public &&
+               $current['title'] === $title && 
+               $current['description'] === $description && 
+               $current['category_id'] === $category_id &&
+               $current['is_public'] === $is_public &&
                 $_FILES['document_file']['name'] === ''
             ) {
                 echo json_encode(['success'=> true,'message'=> 'Aucune information modifiée.']);
@@ -174,65 +184,70 @@ class DocumentController {
             } else {
                 $success = $this->documents_model->updateDocument($id, $data);
                 if ($success) {
-                    echo json_encode(['success'=> true,'message'=> 'Document modifié avec succèss.']);
-                } else  {
-                    echo json_encode(['success'=> false,'message'=> 'Erreur lors de la modification']);
-                }  
+                    echo json_encode(['success' => true, 'message' => 'Document mis à jour avec succès.']);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Échec de la mise à jour du document.']);
+                } 
             }
 
     }
 
     // Methode pour mettre a jour un document partagé
     public function updateShareDocument() {
+        header('Content-Type: application/json');
+        ini_set('display_errors', 1);
+        error_reporting(\E_ALL);
+
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             http_response_code(405);
-            echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
+            echo json_encode(["success" => false, "message" => "Méthode non autorisée"]);
             return;
         }
-                
-        $id = htmlentities(trim($_POST["doc_id"])) ?? null;
-        $title = htmlentities(trim($_POST["title"])) ?? '';
-        $description = htmlentities(trim($_POST["description"])) ?? '';
-        $category_id = intval(htmlentities(trim($_POST["category_id"]))) ?? null;
 
-        if ($title == '') {
+        $id = isset($_POST["doc_id"]) ? intval(trim($_POST["doc_id"])) : null;
+        $title = isset($_POST["title"]) ? trim($_POST["title"]) : '';
+        $description = isset($_POST["description"]) ? trim($_POST["description"]) : '';
+        $category_id = isset($_POST["category_id"]) ? intval(trim($_POST["category_id"])) : null;
+
+        if (empty($title)) {
             echo json_encode(['success' => false, 'message' => 'Le titre du document ne doit pas être vide']);
             return;
         }
-        
+
         $data = [
-            'title'=> $title,
-            'description'=> $description,
-            'category_id'=> $category_id
+            'title' => htmlentities($title),
+            'description' => htmlentities($description),
+            'category_id' => $category_id
         ];
 
-        // $document = $this->documents_model->getDocumentById(intval($id));
-        // $user = $this->auth->user();
+        $document = $this->getDocument($id);
 
-        // if (!isset($document) || ($this->auth->isAdmin() == false && ($document['user_id'] != $user['id']))) { 
-        //     // http_response_code(403);
-        //     echo json_encode(['success'=> false,'message'=> 'Accès non autorisé']);
-        //     return;
-        // }
+        if (!isset($document[0])) {
+            // http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Document introuvable']);
+            return;
+        }
 
-        $document = $this->getDocument(intval($id));
+        $current = $document[0];
 
         if (
-                $document[0]['title'] === $title && 
-                $document[0]['description'] === $description && 
-                $document[0]['category_id'] === $category_id
-            ) {
-                echo json_encode(['success'=> true,'message'=> 'Aucune information modifiée.']);
-                return;
-            } else {
-                $success = $this->documents_model->updateDocument($id, $data, true);
-                if ($success) {
-                    echo json_encode(['success'=> true,'message'=> 'Document modifié avec succèss.']);
-                } else  {
-                    echo json_encode(['success'=> false,'message'=> 'Erreur lors de la modification']);
-                }  
-            }
+            $current['title'] === $title &&
+            $current['description'] === $description &&
+            $current['category_id'] === $category_id
+        ) {
+            echo json_encode(['success' => true, 'message' => 'Aucune information modifiée.']);
+            return;
+        }
 
+        $success = $this->documents_model->updateDocument($id, $data, true);
+
+        if ($success) {
+            echo json_encode(['success' => true, 'message' => 'Document mis à jour avec succès.']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Échec de la mise à jour du document.']);
+        }
     }
 
     // Methode pour supprimer un document
@@ -245,11 +260,15 @@ class DocumentController {
 
         $id = $_POST["delete_document_id"] ?? null;
         $document_share_id = $_POST["delete_document_share_id"] ?? null;
-        if ($id) {
-            $success = $this->documents_model->deleteDocument($id);
+        $delete_category_id = $_POST["delete_category_id"] ?? null;
+
+        if ($delete_category_id) {
+            $success = $this->categories_models->deleteCategory($delete_category_id);
         } else {
-            $success = $this->documents_model->deleteDocument($document_share_id, true);
+            $id ? $success = $this->documents_model->deleteDocument($id)
+                : $success = $this->documents_model->deleteDocument($document_share_id, true);
         }
+
 
         if ($success) {
             echo json_encode(['success'=> true,'message'=> $id]);
@@ -334,6 +353,10 @@ class DocumentController {
 
     // Methode pour uploader un document
     public function insert() {
+        header('Content-Type: application/json');
+        ini_set('display_errors', 1);
+        error_reporting(\E_ALL);
+        
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             http_response_code(405);
             echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
@@ -417,6 +440,10 @@ class DocumentController {
 
     // Methode pour partager un document
     public function shareDocument() {
+        header('Content-Type: application/json');
+        ini_set('display_errors', 1);
+        error_reporting(\E_ALL);
+        
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             http_response_code(405);
             echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
@@ -475,6 +502,119 @@ class DocumentController {
         $this->upload->uploadDocument();
 
         require_once __DIR__ ."/../Views/Layouts/Footer.php";
+    }
+
+    // Methode pour afficher les Categories
+    public function displayCategories() {
+        require_once __DIR__ ."/../Views/Layouts/Header.php";
+
+        $this->categories->displayCategories();
+
+        require_once __DIR__ ."/../Views/Layouts/Footer.php";
+    }
+
+    // Methode pour mettre a jour une catégorie
+    public function updateCategory() {
+        header('Content-Type: application/json');
+        ini_set('display_errors', 1);
+        error_reporting(\E_ALL);
+
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            http_response_code(405);
+            echo json_encode(["success" => false, "message" => "Méthode non autorisée"]);
+            return;
+        }
+
+        $id = isset($_POST["category_id"]) ? intval($_POST["category_id"]) : null;
+        $name = isset($_POST["category_name"]) ? trim($_POST["category_name"]) : '';
+        $description = isset($_POST["description"]) ? trim($_POST["description"]) : '';
+
+        if (empty($name)) {
+            echo json_encode(['success' => false, 'message' => 'Le nom de la catégorie ne doit pas être vide']);
+            return;
+        }
+
+        $data = [
+            'name' => htmlentities($name),
+            'description' => htmlentities($description)
+        ];
+
+        $category = $this->categories_models->getCategoryById($id);
+
+        if (!isset($category[0])) {
+            echo json_encode(['success' => false, 'message' => 'Catégorie introuvable']);
+            return;
+        }
+
+        $current = $category[0];
+
+        if (
+            $current['name'] === $name &&
+            $current['description'] === $description
+        ) {
+            echo json_encode(['success' => true, 'message' => 'Aucune information modifiée.']);
+            return;
+        }
+
+        $success = $this->categories_models->updateCategory($id, $data);
+
+        if ($success) {
+            echo json_encode(['success' => true, 'message' => 'Catégorie mis à jour avec succès.']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Échec de la mise à jour de la Catégorie.']);
+        }
+    }
+
+    // Methode pour ajouter une categorie
+    public function insertCategory() {
+        header('Content-Type: application/json');
+        ini_set('display_errors', 1);
+        error_reporting(\E_ALL);
+        
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            http_response_code(405);
+            echo json_encode(["success" => false,"message" => "Méthode non autorisée"]);
+            return;
+        }
+
+        $categories = $this->categories_models->getAllCategories();
+
+        $category_name = htmlentities(trim($_POST["category_name"])) ?? '';
+        $description = htmlentities(trim($_POST["description"])) ?? '';
+
+        if (empty($category_name)) {
+            echo json_encode(["success"=> false,"message"=> "Veuillez saisir le nom de la catégorie"]);
+            return;
+        }
+
+        $user = $this->auth->user();
+        $results = [];
+
+        foreach ($categories as $category) {
+            if (stripos($category['name'], $category_name) !== false) {
+                $results[] = $category;
+            }
+        }
+
+        if (empty($results)) {
+            $data = [
+                'name'=> $category_name,
+                'description'=> $description,
+                'user_id'=> $user['id']
+            ];
+        } else {
+            echo json_encode(['success'=> false, 'message'=> 'Échec, le nom de la catégorie existe déjà.']);
+            return;
+        }
+
+        $success = $this->categories_models->insertCategory($data);
+        if ($success) {
+            echo json_encode(['success'=> true,'message'=> 'Catégorie ajoutée avec succèss.']);
+        } else  {
+            echo json_encode(['success'=> false,'message'=> 'Erreur lors de l\'ajout de la catégorie']);
+        }  
+
     }
 
 }

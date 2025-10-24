@@ -1,17 +1,18 @@
 <?php
 namespace App\Views\Documents;
 
+use App\Models\Category;
 use App\Models\Document;
 
 class Upload
 {
-    private $documents;
+    private $categories;
     public function __construct() {
-        $this->documents = new Document();
+        $this->categories = new Category();
     }
 
     public function uploadDocument() {
-        $categories = $this->documents->getAllCategories();
+        $categories = $this->categories->getAllCategories();
         $addForm = "
             <div class='container form-card'>
                 <div class='card shadow-md'>

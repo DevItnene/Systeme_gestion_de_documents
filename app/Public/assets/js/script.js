@@ -77,13 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Activer un lien du sidebar
+// Activer un lien du sidebar et afficher ou non la barre de recherche
 const links = document.querySelectorAll('.sidebar-item')
 const currentUrl = location.pathname;
 
 links.forEach(link => {
   if (link.getAttribute('href') === currentUrl) {
-    if (link.getAttribute('href') == '/documents' || link.getAttribute('href') == '/shareDocuments' || link.getAttribute('href') == '/publicDocuments') {
+    if (
+          link.getAttribute('href') == '/documents' ||
+          link.getAttribute('href') == '/shareDocuments' ||
+          link.getAttribute('href') == '/publicDocuments' ||
+          link.getAttribute('href') == '/Categories'
+      ) {
       document.querySelector('.search-bar').style.display = "block"
     }
     link.classList.add('active')
@@ -100,22 +105,7 @@ if (editModal) {
     if (button.classList.contains('edit-btn')) {
       const currentUrl = location.pathname;
 
-      if (currentUrl == '/documents') {
-        const id = button.getAttribute('data-id')
-        const title = button.getAttribute('data-title')
-        const description = button.getAttribute('data-description')
-        const categoty_id = button.getAttribute('data-category-id')
-        const is_public = button.getAttribute('data-is-public')
-  
-        document.getElementById('doc_id').value = id
-        document.getElementById('title').value = title
-        document.getElementById('description').value = description
-        document.getElementById('category_id').value = categoty_id
-  
-        const selectedElement = document.getElementById('is_public')
-  
-        selectedElement.value = is_public
-      } else {
+      if (currentUrl == '/documents' || currentUrl == '/publicDocuments' || currentUrl == '/shareDocuments' ) {
         const id = button.getAttribute('data-id')
         const title = button.getAttribute('data-title')
         const description = button.getAttribute('data-description')
@@ -125,6 +115,21 @@ if (editModal) {
         document.getElementById('title').value = title
         document.getElementById('description').value = description
         document.getElementById('category_id').value = categoty_id
+
+        if (currentUrl == '/documents') {
+          const is_public = button.getAttribute('data-is-public')
+          const selectedElement = document.getElementById('is_public')
+    
+          selectedElement.value = is_public
+        } 
+      } else if (currentUrl == '/Categories') {
+        const id = button.getAttribute('data-id')
+        const category_name = button.getAttribute('data-name')
+        const description = button.getAttribute('data-description')
+
+        document.getElementById('category_id').value = id
+        document.getElementById('category_name').value = category_name
+        document.getElementById('description').value = description
       }
       
       document.getElementById('editModalLabel').textContent = "Modifier le document"
@@ -132,88 +137,85 @@ if (editModal) {
   });
 }
 
-// Gestion du formulaire d'édition
+// Gestion de la soumission du formulaire d'edition
 const editDocumentForm = document.getElementById('editDocumentForm');
 if (editDocumentForm) {
-    editDocumentForm.addEventListener('submit', function(e) {
-    e.preventDefault()
-    
-    const formData = new FormData(this)
+  editDocumentForm.addEventListener('submit', function (e) {
+    e.preventDefault();
 
+    const formData = new FormData(this);
     const currentUrl = location.pathname;
-
-    if (currentUrl == '/documents') {
-      fetch('/documents/update', {
-          method: 'POST',
-          body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.success) {
-              const msgBox = document.getElementById('SuccessMsgBox')
-              const span = document.querySelector('.successMessage')
-              const invalidType = document.getElementById('invalidType')
-              span.innerHTML = data.message
-              msgBox.style.display = 'block'
-              let second
-              (invalidType.textContent == '') ? second = 1500 : second = 3500
-  
-              setInterval(() => {
-                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide()
-                location.reload()
-              }, second);
-          } else {
-              console.log(data.message);
-              document.querySelector('.dangerMessage').textContent = data.message || 'Une erreur est survenue.';
-              document.getElementById('dangerMsgBox').style.display = 'block';
-      
-              setTimeout(() => {
-                document.getElementById('dangerMsgBox').style.display = 'none';
-              }, 5000);
-          }
-      })
-      .catch(error => {
-          console.error('Erreur:', error)
-          document.querySelector('.dangerMessage').textContent = 'Erreur lors de la modification du document.';
-          document.getElementById('dangerMsgBox').style.display = 'block';
-  
-          setTimeout(() => {
-            document.getElementById('dangerMsgBox').style.display = 'none';
-          }, 6000);
-      })
+    let endpoint = ''
+    if (currentUrl == '/Categories') {
+      endpoint = '/Categories/update'
     } else {
-      fetch('/shareDocuments/update', {
-          method: 'POST',
-          body: formData
+      const isDocumentsPage = currentUrl === '/documents';
+      endpoint = isDocumentsPage ? '/documents/update' : '/shareDocuments/update';
+    }
+
+    const submitBtn = document.querySelector('#editDocumentForm button[type="submit"]');
+    const loader = document.getElementById('loader');
+
+    submitBtn.disabled = true;
+    if (loader) loader.style.display = 'inline-block';
+
+    fetch(endpoint, {
+      method: 'POST',
+      body: formData
+    })
+      .then(async response => {
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Erreur HTTP ${response.status} : ${text}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Réponse non JSON : ${text}`);
+        }
+
+        return response.json();
       })
-      .then(response => response.json())
       .then(data => {
-          if (data.success) {
-              const msgBox = document.getElementById('SuccessMsgBox')
-              const span = document.querySelector('.successMessage')
-              span.innerHTML = data.message
-              msgBox.style.display = 'block'
-  
-              setInterval(() => {
-                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide()
-                location.reload()
-              }, 1500);
-          } else {
-              const error = data.message || 'Une erreur est survenue.';
-              console.log(error)
-          }
-      })
-      .catch(error => {
-          console.error('Erreur:', error)
-          document.querySelector('.dangerMessage').textContent = 'Erreur lors de la modification du document.';
+        if (data.success) {
+          const msgBox = document.getElementById('SuccessMsgBox');
+          const span = document.querySelector('.successMessage');
+          const invalidType = document.getElementById('invalidType');
+
+          span.innerHTML = data.message;
+          msgBox.style.display = 'block';
+
+          const delay = invalidType?.textContent === '' ? 1500 : 2500;
+
+          setTimeout(() => {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            location.reload();
+          }, delay);
+        } else {
+          const error = data.message || 'Une erreur est survenue.';
+          document.querySelector('.dangerMessage').textContent = error;
           document.getElementById('dangerMsgBox').style.display = 'block';
-  
+
           setTimeout(() => {
             document.getElementById('dangerMsgBox').style.display = 'none';
           }, 6000);
+        }
       })
-    }
-    
+      .catch(error => {
+        console.error('Erreur:', error.message);
+        // document.querySelector('.dangerMessage').textContent = error.message
+        document.querySelector('.dangerMessage').textContent = "Une erreur est survenue lors de la modification"
+        document.getElementById('dangerMsgBox').style.display = 'block';
+
+        setTimeout(() => {
+          document.getElementById('dangerMsgBox').style.display = 'none';
+        }, 6000);
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        if (loader) loader.style.display = 'none';
+      });
   });
 }
 
@@ -224,12 +226,19 @@ if (deleteModal) {
     const button = event.relatedTarget;
     if (button.classList.contains('delete-btn')) {
       const id = button.getAttribute('data-id')
-      const title = button.getAttribute('data-title')
+      const title = button.getAttribute('data-title') || null
+      const name = button.getAttribute('data-name') || null
 
-      document.getElementById('delete_document_title').innerHTML = title
+      title ? document.getElementById('delete_document_title').innerHTML = title || null
+            : document.getElementById('delete_category_title').innerHTML = name || null
+
       const document_id = document.getElementById('delete_document_id') || null
+      const category_id = document.getElementById('delete_category_id') || null
+
       if (document_id) {
         document_id.value = id
+      } else if (category_id) {
+        category_id.value = id
       } else {
         document.getElementById('delete_document_share_id').value = id
       }
@@ -239,9 +248,9 @@ if (deleteModal) {
 }
 
 // Gestion de la soumission du formulaire de suppression
-const deleteDocumentForm = document.getElementById('deleteDocumentForm');
-if (deleteDocumentForm) {
-  deleteDocumentForm.addEventListener('submit', function (e) {
+const deleteForm = document.getElementById('deleteForm');
+if (deleteForm) {
+  deleteForm.addEventListener('submit', function (e) {
     e.preventDefault()
 
     // if (!confirm('Êtes-vous absolument sûr de vouloir supprimer ce document ?')) {
@@ -251,28 +260,10 @@ if (deleteDocumentForm) {
     const formData = new FormData(this)
 
     const currentUrl = location.pathname;
+    const endpoint = currentUrl + "/delete"    
 
-    if (currentUrl == '/documents'  || currentUrl == '/publicDocuments') {
-      fetch('/documents/delete', {
-        method: "POST",
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-            location.reload();
-        } else if (currentUrl == '/shareDocuments') {
-            alert('Erreur: ' + (data.message || 'Erreur lors de la suppression'));
-        }
-      })
-      .catch(error => {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la suppression du document');
-      });
-
-    } else if (currentUrl == '/shareDocuments') {
-      fetch('/shareDocuments/delete', {
+    if (currentUrl == '/documents'  || currentUrl == '/publicDocuments' || currentUrl == '/shareDocuments' || currentUrl == '/Categories') {
+      fetch(endpoint, {
         method: "POST",
         body: formData
       })
@@ -289,8 +280,8 @@ if (deleteDocumentForm) {
         console.error('Erreur:', error);
         alert('Erreur lors de la suppression du document');
       });
-    }
 
+    }
   });
 }
 
@@ -338,7 +329,6 @@ if (viewModal) {
 
 // Telecharger un document partagé
 const download_btn = document.querySelectorAll('.download-btn')
-
 if (download_btn) {
   download_btn.forEach(btn => {
     btn.addEventListener('click', function (e) {
@@ -457,7 +447,7 @@ if (addForm) {
           setTimeout(() => {
             document.getElementById('dangerMsgBox').style.display = 'none';
           }, 6000);
-        }
+      }
     })
     .catch(error => {
       console.error('Erreur:', error);
@@ -469,6 +459,42 @@ if (addForm) {
       }, 4000);
     });
   });
+}
+
+// Gestion du modal d'ajout d'une categorie
+const addCategory = document.getElementById('addCategoryForm')
+if (addCategory) {
+  addCategory.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this)
+
+    fetch('/Categories/insert', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.querySelector('.successMsg').textContent = data.message;
+        document.getElementById('SuccessCatMsg').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('SuccessCatMsg').style.display = 'none';
+          location.reload()
+        }, 3000);
+      } else {
+        if (data.message == 'Échec, le nom de la catégorie existe déjà.') {
+          document.querySelector('.dangerMsg').textContent = data.message || 'Une erreur est survenue.';
+          document.getElementById('dangerCatMsg').style.display = 'block';
+
+        }
+
+        setTimeout(() => {
+          document.getElementById('dangerCatMsg').style.display = 'none';
+        }, 6000);
+      }
+    })
+  })
 }
 
 

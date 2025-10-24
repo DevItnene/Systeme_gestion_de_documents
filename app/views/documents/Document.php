@@ -1,18 +1,19 @@
 <?php
 namespace App\Views\Documents;
 
-use App\Core\Auth;
 use App\Models\User;
-use App\Core\Database;
+use App\Models\Category;
 use App\Models\Document as DocumentModel;
 
 class Document {
 
     private $docs;
     private $users;
+    private $categories;
     public function __construct() {
         $this->docs = new DocumentModel();
         $this->users = new User();
+        $this->categories = new Category();
     }
 
     public function displayDocument($id) {
@@ -202,7 +203,7 @@ class Document {
 
         echo $table;
 
-        $categories = $this->docs->getAllCategories();
+        $categories = $this->categories->getAllCategories();
 
         $editModal = "
             <div class='modal fade' id='editModal' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>
@@ -273,7 +274,7 @@ class Document {
                             </div>
                             <div class='modal-footer'>
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Annuler</button>
-                                <form id='deleteDocumentForm' method='POST' action='/documents/delete' style='display: inline;'>
+                                <form id='deleteForm' method='POST' action='/documents/delete' style='display: inline;'>
                                     <input type='hidden' id='delete_document_share_id' name='delete_document_share_id'>
                                     <button type='submit' class='btn btn-danger'>Supprimer définitivement</button>
                                 </form>
@@ -479,7 +480,7 @@ class Document {
 
         echo $table;
 
-        $categories = $this->docs->getAllCategories();
+        $categories = $this->categories->getAllCategories();
 
         $editModal = "
             <div class='modal fade' id='editModal' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>
@@ -523,7 +524,10 @@ class Document {
                                 </div>
                                 <div class='modal-footer'>
                                     <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Fermer</button>
-                                    <button type='submit' class='btn btn-primary' id='save-btn'>Enregistrer</button>
+                                    <button type='submit' class='btn btn-primary' id='submitBtn'>
+                                        Enregistrer
+                                        <span id='loader' class='spinner-border spinner-border-sm ms-2' style='display: none;' role='status' aria-hidden='true'></span>
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -550,7 +554,7 @@ class Document {
                             </div>
                             <div class='modal-footer'>
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Annuler</button>
-                                <form id='deleteDocumentForm' method='POST' action='/documents/delete' style='display: inline;'>
+                                <form id='deleteForm' method='POST' action='/documents/delete' style='display: inline;'>
                                     <input type='hidden' id='delete_document_id' name='delete_document_id'>
                                     <button type='submit' class='btn btn-danger'>Supprimer définitivement</button>
                                 </form>
@@ -754,7 +758,7 @@ class Document {
 
         echo $table;
 
-        $categories = $this->docs->getAllCategories();
+        $categories = $this->categories->getAllCategories();
 
         $editModal = "
             <div class='modal fade' id='editModal' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>
@@ -795,6 +799,7 @@ class Document {
                                         }
                                 $editModal .="
                                     </select>
+                                    <div class='invalid-feedback' id='invalidType'>Veuillez choisir une catégorie</div>
                                 </div>                                
                                 <div class='mb-3 row'>
                                     <label for='document_file' class='col-form-label'>Changer le document</label>
@@ -839,7 +844,7 @@ class Document {
                             </div>
                             <div class='modal-footer'>
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Annuler</button>
-                                <form id='deleteDocumentForm' method='POST' action='/documents/delete' style='display: inline;'>
+                                <form id='deleteForm' method='POST' action='/documents/delete' style='display: inline;'>
                                     <input type='hidden' id='delete_document_id' name='delete_document_id'>
                                     <button type='submit' class='btn btn-danger'>Supprimer définitivement</button>
                                 </form>

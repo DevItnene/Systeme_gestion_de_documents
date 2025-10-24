@@ -2,18 +2,22 @@
 namespace App\Public;
 
 use App\Core\Router;
-session_start();
-require_once __DIR__ . "/../../vendor/autoload.php";
 
+// require_once __DIR__ . "/../../App/Controllers/sessions.php";
+
+require_once __DIR__ . "/../../vendor/autoload.php";
+session_start();
+// require_once __DIR__ . "/../../App/Controllers/sessions.php";
 $router = new Router();
 
 $router->get("/", "AuthController@showLogin");
 $router->get("/login", "AuthController@showLogin");
 $router->post("/login", "AuthController@LoginTraitment");
-$router->get("/dashboard", "DashboardController@dashboard");
 $router->get("/register", "AuthController@showRegister");
 $router->post("/register", "AuthController@register");
 $router->get("/logout", "AuthController@LogOut");
+
+$router->get("/dashboard", "DashboardController@dashboard");
 
 // Routes 
 $router->get("/documents","DocumentController@documentList");
@@ -31,8 +35,13 @@ $router->get("/shareDocuments","DocumentController@shareDocumentList");
 $router->post("/shareDocuments/delete","DocumentController@delete");
 $router->post("/shareDocuments/update","DocumentController@updateShareDocument");
 
+$router->post("/publicDocuments/delete","DocumentController@delete");
 $router->get("/publicDocuments","DocumentController@publicDocumentList");
 
+$router->get("/Categories","DocumentController@displayCategories");
+$router->post("/Categories/delete","DocumentController@delete");
+$router->post("/Categories/update","DocumentController@updateCategory");
+$router->post("/Categories/insert","DocumentController@insertCategory");
 
 
 $router->run();

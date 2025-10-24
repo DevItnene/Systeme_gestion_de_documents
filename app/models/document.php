@@ -1,15 +1,12 @@
 <?php
 namespace App\Models;
 
-use App\Core\Auth;
 use App\Core\Database;
 
 class Document {
     private $db;
-    private $auth;
     public function __construct() {
         $this->db = new Database();
-        $this->auth = new Auth();
     }
 
     // Methode pour une requete pour recuperer tous les documents
@@ -18,7 +15,8 @@ class Document {
             return $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
                                                     FROM  documents d
                                                     LEFT JOIN categories c ON d.category_id = c.id
-                                                    ORDER BY d.created_at DESC");
+                                                    WHERE d.user_id = ?
+                                                    ORDER BY d.created_at DESC", [$_SESSION["user_id"]]);
         } 
         
         return $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
@@ -31,18 +29,10 @@ class Document {
 
     // Methode pour une requete afin de recuperer un document
     public function getDocumentById($id) {
-        ($this->auth->isAdmin()) ?
-            $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
-                                                        FROM  documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.id = ?", [$id])
-            :
-            $results = $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
-                                                        FROM  documents d
-                                                        LEFT JOIN categories c ON d.category_id = c.id
-                                                        WHERE d.id = ? AND d.user_id = ?", [$id, $_SESSION["user_id"]]);
-        
-        return $results;
+        return $this->db->queryFetchAll("  SELECT d.*, c.name as category_name
+                                                FROM  documents d
+                                                LEFT JOIN categories c ON d.category_id = c.id
+                                                WHERE d.id = ?", [$id]);
     }
 
     // Methode pour rechercher un ou plusieurs documents
@@ -69,6 +59,11 @@ class Document {
 
         return $this->db->queryFetch("SELECT COUNT(*) as Total FROM documents WHERE user_id = ?", [$_SESSION["user_id"]]);
 
+    }
+
+    // Methode pour une requete qui renvoyer le nombre total de telechargements
+    public function getDocumentDownloadCounts() {
+        return $this->db->queryFetch("SELECT SUM(download_count) as Total FROM documents WHERE user_id = ?", [$_SESSION["user_id"]]);
     }
 
     // Methode pour recuperer un document partagé
@@ -107,7 +102,7 @@ class Document {
     }
     
     // Methode pour une requete qui renvoyer le nombre total de documents partagés pour un utilisateur
-    public function getShareDocumentCounts($search = null) {
+    public function getShareDocumentCounts($search = null, $shared_by = null) {
         if ($search != null) {
             return $this->db->queryFetch(" SELECT COUNT(*) as Total
                                                 FROM  document_shares d_s
@@ -116,6 +111,8 @@ class Document {
                                                 LEFT JOIN categories c ON c.id = d.category_id
                                                 WHERE d_s.shared_with_user_id = ? AND (d.title LIKE ? OR u.name LIKE ? OR c.name LIKE ?)
                                                 ", [$_SESSION['user_id'], "%$search%", "%$search%", "%$search%"]);
+        } else if ($shared_by != null) {
+            return $this->db->queryFetch("SELECT COUNT(*) as Total FROM document_shares WHERE shared_by = ?", [$_SESSION["user_id"]]);
         }
 
         return $this->db->queryFetch("SELECT COUNT(*) as Total FROM document_shares WHERE shared_with_user_id = ?", [$_SESSION["user_id"]]);
@@ -285,10 +282,5 @@ class Document {
         return $this->db->query("UPDATE documents SET download_count = download_count + 1 WHERE id = ?", [$id]);
     }
 
-    // TODO : Apres faut mettre dans category
-    public function getAllCategories() {
-        $results = $this->db->queryFetchAll("SELECT * FROM categories");
-        return $results;
-    }
 }
 ?>
